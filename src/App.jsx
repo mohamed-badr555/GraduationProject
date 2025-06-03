@@ -1,5 +1,5 @@
 import React from 'react';
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createHashRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import FixedDarkModeToggle from './Component/Ui/FixedDarkModeToggle/FixedDarkModeToggle';
@@ -18,7 +18,7 @@ import Injection from './Pages/Injection';
 import ManualControl from './Pages/ManualControl';
 
 // Create the router configuration
-const router = createBrowserRouter([
+const router = createHashRouter([
   // Public Authentication Routes
   {
     path: "/login",
