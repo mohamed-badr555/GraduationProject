@@ -1,83 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../Component/Layout/DashboardLayout';
+import ApiManager from '../services/ApiManager';
+import { useAuth } from '../context/AuthContext';
 
 const Injection = () => {
+  const { token } = useAuth();
   // Injection system state
   const [isInjecting, setIsInjecting] = useState(false);
+  const [injectionHistory, setInjectionHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   
   // Injection parameters
   const [rangeOfInfrared, setRangeOfInfrared] = useState('');
   const [stepOfInjection, setStepOfInjection] = useState('');
   const [volumeOfLiquid, setVolumeOfLiquid] = useState('');
-  const [numberOfElements, setNumberOfElements] = useState('');
-  // Handle start injection - API call will be made here
-  const handleStartInjection = async () => {
-    if (rangeOfInfrared && stepOfInjection && volumeOfLiquid && numberOfElements) {
-      setIsInjecting(true);
-      
-      // TODO: Replace with actual API call to hardware system
-      const injectionData = {
-        rangeOfInfrared: parseFloat(rangeOfInfrared),
-        stepOfInjection: parseFloat(stepOfInjection),
-        volumeOfLiquid: parseFloat(volumeOfLiquid),
-        numberOfElements: parseInt(numberOfElements)
-      };
-      
-      console.log('Starting injection with parameters:', injectionData);
-      
-      // Simulate injection process for now
-      setTimeout(() => {
-        setIsInjecting(false);
-        console.log('Injection completed');
-      }, 5000);
-      
-      /*
-      // Future API integration for hardware engineering team:
-      try {
-        const response = await fetch('/api/injection/start', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(injectionData),
-        });
-        
-        if (response.ok) {
-          console.log('Injection started successfully');
-        } else {
-          console.error('Failed to start injection');
-          setIsInjecting(false);
-        }
-      } catch (error) {
-        console.error('API call failed:', error);
-        setIsInjecting(false);
-      }
-      */
+  const [numberOfElements, setNumberOfElements] = useState('');  // Load injection history on component mount
+  useEffect(() => {
+    loadInjectionHistory();
+  }, []);
+
+  // Load injection history from API
+  const loadInjectionHistory = async () => {
+    try {
+      setLoading(true);
+      const response = await ApiManager.getInjectionHistory(token);
+      setInjectionHistory(response.data || []);
+    } catch (error) {
+      console.error('Failed to load injection history:', error);
+      setError('Failed to load injection history');
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Handle start injection - API call will be made here
+  const handleStartInjection = async () => {
+    if (rangeOfInfrared && stepOfInjection && volumeOfLiquid && numberOfElements) {
+      try {
+        setIsInjecting(true);
+        setError(null);
+        
+        const injectionData = {
+          rangeOfInfrared: parseFloat(rangeOfInfrared),
+          stepOfInjection: parseFloat(stepOfInjection),
+          volumeOfLiquid: parseFloat(volumeOfLiquid),
+          numberOfElements: parseInt(numberOfElements)
+        };
+        
+        console.log('Starting injection with parameters:', injectionData);
+        
+        // Call real API endpoint
+        const response = await ApiManager.startInjection(token, injectionData);
+        
+        if (response.success) {
+          console.log('Injection started successfully:', response.message);
+          await loadInjectionHistory(); // Reload history
+        } else {
+          throw new Error(response.message || 'Failed to start injection');
+        }
+        
+      } catch (error) {
+        console.error('API call failed:', error);
+        setError(error.message || 'Failed to start injection');
+        setIsInjecting(false);
+      }
+    } else {
+      setError('Please fill in all injection parameters');
+    }
+  };
   // Handle stop injection - API call will be made here
   const handleStopInjection = async () => {
-    setIsInjecting(false);
-    
-    console.log('Stopping injection');
-    
-    /*
-    // Future API integration for hardware engineering team:
     try {
-      const response = await fetch('/api/injection/stop', {
-        method: 'POST',
-      });
+      setIsInjecting(false);
+      setError(null);
       
-      if (response.ok) {
-        console.log('Injection stopped successfully');
+      console.log('Stopping injection');
+      
+      // Call real API endpoint
+      const response = await ApiManager.stopInjection(token);
+      
+      if (response.success) {
+        console.log('Injection stopped successfully:', response.message);
+        await loadInjectionHistory(); // Reload history
       } else {
-        console.error('Failed to stop injection');
+        throw new Error(response.message || 'Failed to stop injection');
       }
+      
     } catch (error) {
       console.error('API call failed:', error);
+      setError(error.message || 'Failed to stop injection');
     }
-    */
   };
   return (
     <DashboardLayout>
@@ -90,16 +103,40 @@ const Injection = () => {
           </div>
         </div>
 
-        {/* Injection Parameters */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <i className="fa-solid fa-exclamation-triangle text-red-500 mr-2"></i>
+              <p className="text-red-800 dark:text-red-400 font-medium">{error}</p>
+              <button 
+                onClick={() => setError(null)}
+                className="ml-auto text-red-500 hover:text-red-700 dark:hover:text-red-300"
+              >
+                <i className="fa-solid fa-times"></i>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Loading Display */}
+        {loading && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <i className="fa-solid fa-spinner fa-spin text-blue-500 mr-2"></i>
+              <p className="text-blue-800 dark:text-blue-400 font-medium">Loading...</p>
+            </div>
+          </div>
+        )}        {/* Injection Parameters */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
             <i className="fa-solid fa-cog mr-2 text-green-600"></i>
             Injection Parameters
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Range Of Infrared */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Range Of Infrared (mm)
               </label>
@@ -107,13 +144,11 @@ const Injection = () => {
                 type="number"
                 value={rangeOfInfrared}
                 onChange={(e) => setRangeOfInfrared(e.target.value)}
-                className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full sm:w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="0"
               />
-            </div>
-
-            {/* Step Of Injection */}
-            <div className="flex items-center justify-between">
+            </div>            {/* Step Of Injection */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Step Of Injection (mm)
               </label>
@@ -121,13 +156,13 @@ const Injection = () => {
                 type="number"
                 value={stepOfInjection}
                 onChange={(e) => setStepOfInjection(e.target.value)}
-                className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full sm:w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="0"
               />
             </div>
 
             {/* Volume Of Liquid */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Volume Of Liquid (ml)
               </label>
@@ -136,13 +171,13 @@ const Injection = () => {
                 step="0.1"
                 value={volumeOfLiquid}
                 onChange={(e) => setVolumeOfLiquid(e.target.value)}
-                className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full sm:w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="0.0"
               />
             </div>
 
             {/* Number Of Elements */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Number Of Elements
               </label>
@@ -150,7 +185,7 @@ const Injection = () => {
                 type="number"
                 value={numberOfElements}
                 onChange={(e) => setNumberOfElements(e.target.value)}
-                className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full sm:w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="0"
               />
             </div>
@@ -158,8 +193,8 @@ const Injection = () => {
         </div>
 
         {/* Injection Control */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
             <i className="fa-solid fa-syringe mr-2 text-purple-600"></i>
             Injection Control
           </h2>
@@ -258,31 +293,46 @@ const Injection = () => {
                   <th className="px-6 py-3">Volume (ml)</th>
                   <th className="px-6 py-3">Status</th>
                 </tr>
-              </thead>
-              <tbody>
-                {[
-                  { time: '14:35:15', egg: 6, volume: 0.5, status: 'Success' },
-                  { time: '14:35:10', egg: 5, volume: 0.5, status: 'Success' },
-                  { time: '14:35:05', egg: 4, volume: 0.5, status: 'Success' },
-                  { time: '14:35:00', egg: 3, volume: 0.5, status: 'Success' },
-                ].map((injection, index) => (
-                  <tr key={index} className="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                      {injection.time}
-                    </td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                      {injection.egg}
-                    </td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                      {injection.volume}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded-full">
-                        {injection.status}
-                      </span>
+              </thead>              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="4" className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                      <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                      Loading injection history...
                     </td>
                   </tr>
-                ))}
+                ) : injectionHistory.length > 0 ? (
+                  injectionHistory.map((injection, index) => (
+                    <tr key={injection.id || index} className="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                        {new Date(injection.timestamp || injection.time).toLocaleTimeString()}
+                      </td>
+                      <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
+                        {injection.eggNumber || injection.egg || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
+                        {injection.volume || injection.volumeOfLiquid || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          injection.status === 'Success' || injection.status === 'Completed'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                            : injection.status === 'Failed' || injection.status === 'Error'
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        }`}>
+                          {injection.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                      No injection history available
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

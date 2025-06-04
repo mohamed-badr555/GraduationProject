@@ -3,57 +3,82 @@ import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useSidebar } from '../../context/SidebarContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function Header() {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
+  const { toggleSidebar, isMobile } = useSidebar();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-between px-6 py-4">      {/* Logo and Title */}
+      <div className="flex items-center justify-between px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
+        {/* Left Side - Mobile Menu + Logo */}
         <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-lg flex items-center justify-center shadow-md">
-            <i className="fa-solid fa-egg text-white text-lg"></i>
+          {/* Mobile Menu Button */}
+          {isMobile && (
+            <button
+              onClick={toggleSidebar}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 lg:hidden"
+              aria-label="Toggle sidebar"
+            >
+              <i className="fa-solid fa-bars text-gray-600 dark:text-gray-300 text-lg"></i>
+            </button>
+          )}
+
+          {/* Logo and Title */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-lg flex items-center justify-center shadow-md">
+              <i className="fa-solid fa-egg text-white text-sm sm:text-lg"></i>
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+                <span className="text-emerald-600">ovo</span>
+                <span className="text-teal-600">Vax</span>
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Automated In-Ovo Vaccination</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              <span className="text-emerald-600">ovo</span>
-              <span className="text-teal-600">Vax</span>
-            </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Automated In-Ovo Vaccination</p>
-          </div>
-        </div>        {/* Right Side - Status and User Menu */}
-        <div className="flex items-center space-x-4">
+        </div>
+
+        {/* Right Side - Status and User Menu */}
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {/* System Status */}
-          <div className="flex items-center px-3 py-2 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg">
+          <div className="hidden sm:flex items-center px-2 sm:px-3 py-1 sm:py-2 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg">
             <div className="h-2 w-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></div>
-            <span className="text-emerald-700 dark:text-emerald-300 text-sm font-medium">System Active</span>
+            <span className="text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-medium">System Active</span>
+          </div>
+          
+          {/* Mobile System Status (Icon Only) */}
+          <div className="sm:hidden flex items-center justify-center h-8 w-8 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
           </div>
           
           {/* Notifications */}
-          <button className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-            <i className="fa-solid fa-bell text-gray-600 dark:text-gray-300 text-lg"></i>
-            <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-          </button>{/* User Dropdown */}
+          <button className="relative p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+            <i className="fa-solid fa-bell text-gray-600 dark:text-gray-300 text-base sm:text-lg"></i>
+            <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+          </button>
+
+          {/* User Dropdown */}
           <Menu as="div" className="relative">
-            <Menu.Button className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-              <i className="fa-solid fa-circle-user text-gray-600 dark:text-gray-300 text-2xl"></i>
-              <div className="text-left">
+            <Menu.Button className="flex items-center space-x-1 sm:space-x-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+              <i className="fa-solid fa-circle-user text-gray-600 dark:text-gray-300 text-xl sm:text-2xl"></i>
+              <div className="hidden md:block text-left">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {user?.firstName} {user?.lastName}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
               </div>
-              <i className="fa-solid fa-chevron-down text-gray-400 dark:text-gray-500 text-sm"></i>
-            </Menu.Button>
-
-            <Transition
+              <i className="fa-solid fa-chevron-down text-gray-400 dark:text-gray-500 text-xs sm:text-sm"></i>
+            </Menu.Button>            <Transition
               as={Fragment}
               enter="transition ease-out duration-100"
               enterFrom="transform opacity-0 scale-95"
@@ -63,7 +88,8 @@ export default function Header() {
               leaveTo="transform opacity-0 scale-95"
             >
               <Menu.Items className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-600 focus:outline-none z-50">
-                <div className="py-1">                  <Menu.Item>
+                <div className="py-1">
+                  <Menu.Item>
                     {({ active }) => (
                       <a
                         href="/settings"

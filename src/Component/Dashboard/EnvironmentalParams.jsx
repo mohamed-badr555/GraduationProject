@@ -20,15 +20,14 @@ export default function EnvironmentalParams() {
       range: '1.0 - 1.4 bar',
       status: 'warning'
     }
-  ];
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+  ];  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
       <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Environmental Parameters</h2>
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {params.map((param) => (
-          <div key={param.label} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div key={param.label} className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="flex justify-between items-center">
-              <span className="text-gray-600 dark:text-gray-400">{param.label}</span>
+              <span className="text-sm sm:text-base text-gray-600 dark:text-gray-400">{param.label}</span>
               <span className={`px-2 py-1 rounded-full text-xs ${
                 param.status === 'normal' 
                   ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' 
@@ -38,8 +37,8 @@ export default function EnvironmentalParams() {
               </span>
             </div>
             <div className="mt-2">
-              <span className="text-2xl font-bold text-gray-800 dark:text-white">{param.value}</span>
-              <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">Range: {param.range}</span>
+              <span className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">{param.value}</span>
+              <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Range: {param.range}</div>
             </div>
           </div>
         ))}

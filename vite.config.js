@@ -8,7 +8,6 @@ const __dirname = path.dirname(__filename);
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/GraduationProject/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -16,6 +15,6 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: 5173,
   },
 });

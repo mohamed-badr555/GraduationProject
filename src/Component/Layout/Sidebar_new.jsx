@@ -78,6 +78,7 @@ export default function Sidebar() {
           <p>© {new Date().getUTCFullYear()} ovoVax System</p>
           <p className="mt-1">v1.0.0</p>
         </div>
-      </div>    </aside>
+      </div>
+    </aside>
   );
 }

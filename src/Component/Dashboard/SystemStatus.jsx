@@ -22,16 +22,15 @@ export default function SystemStatus() {
       value: '85%',
       color: 'text-yellow-600' 
     },
-  ];
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+  ];  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
       <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">System Overview</h2>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
+          <div key={stat.label} className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">{stat.label}</p>
             <div className="flex items-center mt-1">
-              <h3 className={`text-2xl font-bold ${stat.color}`}>{stat.value}</h3>
+              <h3 className={`text-xl sm:text-2xl font-bold ${stat.color}`}>{stat.value}</h3>
             </div>
           </div>
         ))}

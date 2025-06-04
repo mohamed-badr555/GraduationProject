@@ -77,11 +77,12 @@ export default function Statistics() {
       }
     }
   };
-
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
       <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Weekly Performance</h2>
-      <Line data={data} options={options} />
+      <div className="h-48 sm:h-64">
+        <Line data={data} options={options} />
+      </div>
     </div>
   );
 }
