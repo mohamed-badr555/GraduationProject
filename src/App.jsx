@@ -18,23 +18,23 @@ import Alerts from './Pages/Alerts';
 import Reports from './Pages/Reports';
 
 // Create the router configuration
+// Note: Using HashRouter with paths that don't start with "/" for GitHub Pages
 const router = createHashRouter([
   // Public Authentication Routes
   {
-    path: "/login",
+    path: "login",
     element: <Login />
-  },
-  {
-    path: "/register",
+  },  {
+    path: "register",
     element: <Register />
   },
   {
-    path: "/forgot-password",
+    path: "forgot-password",
     element: <ForgotPassword />
   },
     // Protected Dashboard Routes  
     {
-    path: "/",
+    path: "",
     element: (
       <ProtectedRoute>
         <Dashboard />
@@ -42,7 +42,7 @@ const router = createHashRouter([
     )
   },
   {
-    path: "/scanner",
+    path: "scanner",
     element: (
       <ProtectedRoute>
         <Scanner />
@@ -50,7 +50,7 @@ const router = createHashRouter([
     )
   },
   {
-    path: "/injection",
+    path: "injection",
     element: (
       <ProtectedRoute>
         <Injection />
@@ -58,7 +58,7 @@ const router = createHashRouter([
     )
   },
   {
-    path: "/manual-control",
+    path: "manual-control",
     element: (
       <ProtectedRoute>
         <ManualControl />
@@ -66,7 +66,7 @@ const router = createHashRouter([
     )
   },
   {
-    path: "/alerts",
+    path: "alerts",
     element: (
       <ProtectedRoute>
         <Alerts />
@@ -74,7 +74,7 @@ const router = createHashRouter([
     )
   },
   {
-    path: "/reports",
+    path: "reports",
     element: (
       <ProtectedRoute>
         <Reports />
@@ -85,11 +85,9 @@ const router = createHashRouter([
   // Fallback route
   {
     path: "*",
-    element: <Navigate to="/" replace />
+    element: <Navigate to="" replace />
   }
-], {
-  basename: import.meta.env.MODE === 'production' ? '/GraduationProject' : ''
-});
+]);
 
 function App() {
   return (
