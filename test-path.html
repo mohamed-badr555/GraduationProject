@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base Path Test</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Base Path Test</h1>
+  <p>This page tests if your base path is configured correctly.</p>
+  
+  <h2>Testing Base Path</h2>
+  <div id="test-results">Running tests...</div>
+  
+  <script>
+    window.onload = function() {
+      const results = document.getElementById('test-results');
+      let html = '';
+      
+      // Test 1: Check if index.html exists
+      fetch('../index.html')
+        .then(response => {
+          html += `<p>Test 1 - index.html: ${response.ok ? 'OK' : 'Failed'} (${response.status})</p>`;
+          return fetch('../src/main.jsx');
+        })
+        .catch(error => {
+          html += `<p>Test 1 - index.html: Error: ${error.message}</p>`;
+          return fetch('../src/main.jsx');
+        })
+        // Test 2: Check if source files are accessible
+        .then(response => {
+          html += `<p>Test 2 - src/main.jsx: ${response.ok ? 'OK' : 'Failed'} (${response.status})</p>`;
+          results.innerHTML = html;
+        })
+        .catch(error => {
+          html += `<p>Test 2 - src/main.jsx: Error: ${error.message}</p>`;
+          results.innerHTML = html;
+        });
+    };
+  </script>
+</body>
+</html>
