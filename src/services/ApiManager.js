@@ -4,8 +4,8 @@ import axios from "axios";
 // Only includes endpoints that actually exist in the backend
 // No authentication endpoints until backend implements them
 
-// const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://ovovax.runasp.net/api";
-const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://localhost:7268/api";
+const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://ovovax.runasp.net/api";
+// const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://localhost:7268/api";
 
 // Helper function to get headers (no token for now)
 const getHeaders = () => {
