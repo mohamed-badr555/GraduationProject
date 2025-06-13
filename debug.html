@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GitHub Pages Debug</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+    .section { margin-bottom: 20px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+    pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+    button { padding: 10px; cursor: pointer; margin-right: 10px; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>GitHub Pages Debug Tool</h1>
+  <div class="section">
+    <h2>1. Environment Information</h2>
+    <div id="environment"></div>
+  </div>
+
+  <div class="section">
+    <h2>2. Test Asset Loading</h2>
+    <p>Testing if CSS and JavaScript files can be loaded correctly:</p>
+    <div id="assets"></div>
+  </div>
+
+  <div class="section">
+    <h2>3. React Test</h2>
+    <p>This will attempt to load React from a CDN and render a simple component:</p>
+    <div id="react-root"></div>
+  </div>
+
+  <div class="section">
+    <h2>4. App Entry Points</h2>
+    <p>Links to test different entry points:</p>
+    <button onclick="window.location.href = '.'">Root URL</button>
+    <button onclick="window.location.href = '#/'">Hash Router Root</button>
+    <button onclick="window.location.href = '#/login'">Login Page</button>
+  </div>
+
+  <script>
+    // Environment information
+    const envDiv = document.getElementById('environment');
+    const envInfo = `
+      <p><strong>URL:</strong> ${window.location.href}</p>
+      <p><strong>Protocol:</strong> ${window.location.protocol}</p>
+      <p><strong>Host:</strong> ${window.location.host}</p>
+      <p><strong>Pathname:</strong> ${window.location.pathname}</p>
+      <p><strong>Base URL:</strong> ${document.baseURI}</p>
+    `;
+    envDiv.innerHTML = envInfo;
+
+    // Test asset loading
+    const assetsDiv = document.getElementById('assets');
+    fetch('./assets/index-BXkzHl84.css')
+      .then(response => {
+        if(response.ok) {
+          assetsDiv.innerHTML += '<p class="success">✅ CSS file loaded successfully</p>';
+        } else {
+          throw new Error('CSS file not found');
+        }
+      })
+      .catch(err => {
+        assetsDiv.innerHTML += `<p class="error">❌ Failed to load CSS: ${err.message}</p>`;
+      });
+
+    fetch('./assets/index-C0hjCvmU.js')
+      .then(response => {
+        if(response.ok) {
+          assetsDiv.innerHTML += '<p class="success">✅ JS file loaded successfully</p>';
+        } else {
+          throw new Error('JS file not found');
+        }
+      })
+      .catch(err => {
+        assetsDiv.innerHTML += `<p class="error">❌ Failed to load JS: ${err.message}</p>`;
+      });
+
+    // React test
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/react@18/umd/react.production.min.js';
+    document.head.appendChild(script);
+
+    const domScript = document.createElement('script');
+    domScript.src = 'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js';
+    document.head.appendChild(domScript);
+
+    domScript.onload = function() {
+      const script = document.createElement('script');
+      script.text = `
+        const root = ReactDOM.createRoot(document.getElementById('react-root'));
+        const element = React.createElement('div', null, [
+          React.createElement('h3', null, 'React is working!'),
+          React.createElement('p', null, 'This means React can load and render components.')
+        ]);
+        root.render(element);
+      `;
+      document.body.appendChild(script);
+    };
+  </script>
+</body>
+</html>
