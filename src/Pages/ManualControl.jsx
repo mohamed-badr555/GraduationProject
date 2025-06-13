@@ -19,7 +19,7 @@ const ManualControl = () => {
   const loadMovementHistory = async () => {
     try {
       setLoading(true);
-      const response = await ApiManager.getMovementHistory(token);
+      const response = await ApiManager.getMovementHistory();
       setMovementHistory(response.data || []);
     } catch (error) {
       console.error('Failed to load movement history:', error);
@@ -45,13 +45,12 @@ const ManualControl = () => {
       };
       
       // Call real API endpoint
-      const response = await ApiManager.moveAxis(token, movementData);
-      
-      if (response.success) {
-        console.log('Movement completed successfully:', response.message);
+      const response = await ApiManager.moveAxis(movementData);
+        if (response && response.data && response.data.success) {
+        console.log('Movement completed successfully:', response.data.message);
         await loadMovementHistory(); // Reload history
       } else {
-        throw new Error(response.message || 'Failed to move axis');
+        throw new Error(response?.data?.message || 'Failed to move axis');
       }
       
     } catch (error) {
@@ -70,13 +69,12 @@ const ManualControl = () => {
       console.log('Homing all axes...');
       
       // Call real API endpoint
-      const response = await ApiManager.homeAxes(token);
-      
-      if (response.success) {
-        console.log('Homing completed successfully:', response.message);
+      const response = await ApiManager.homeAxes();
+        if (response && response.data && response.data.success) {
+        console.log('Homing completed successfully:', response.data.message);
         await loadMovementHistory(); // Reload history
       } else {
-        throw new Error(response.message || 'Failed to home axes');
+        throw new Error(response?.data?.message || 'Failed to home axes');
       }
       
     } catch (error) {
@@ -104,7 +102,8 @@ const ManualControl = () => {
   return (
     <DashboardLayout>
       <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-full">
-        <div className="max-w-6xl mx-auto">          {/* Header */}
+        <div className="max-w-6xl mx-auto">
+                    {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               <i className="fas fa-gamepad text-green-500 mr-3"></i>
@@ -139,7 +138,8 @@ const ManualControl = () => {
                 <p className="text-blue-800 dark:text-blue-400 font-medium">Loading...</p>
               </div>
             </div>
-          )}          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8">
+          )}     
+               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8">
             {/* Control Panel */}
             <div className="space-y-4 lg:space-y-6">
               {/* Speed Control */}

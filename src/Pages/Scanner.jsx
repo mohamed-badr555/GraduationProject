@@ -5,64 +5,75 @@ import { useAuth } from '../context/AuthContext';
 
 export default function Scanner() {
   const { token } = useAuth();
-  const [isScanning, setIsScanning] = useState(false);
-  const [infraredValue, setInfraredValue] = useState(null);
-  const [scanProgress, setScanProgress] = useState(0);
+    const [isScanning, setIsScanning] = useState(false);
+
+  const [ScanData, setScanData] = useState({});
   const [scanHistory, setScanHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  // Load scan history on component mount
+  const [error, setError] = useState(null);  // Load scan history on component mount
   useEffect(() => {
     loadScanHistory();
   }, []);
+
+  // TODO: Enable real-time updates when backend implements /current-depth ebndpoint
+  // Real-time depth measurement updates while scanning
+  // useEffect(() => {
+  //   let intervalId;
+  //   
+  //   if (isScanning && ScanData.scanId) {
+  //     // Poll for current depth measurement every 2 seconds while scanning
+  //     intervalId = setInterval(async () => {
+  //       try {
+  //         const response = await ApiManager.getCurrentDepthMeasurement();
+  //         if (response?.data?.depthMeasurement !== undefined) {
+  //           setScanData(prev => ({
+  //             ...prev,
+  //             depthMeasurement: response.data.depthMeasurement
+  //           }));
+  //         }
+  //       } catch (error) {
+  //         console.error('Failed to get current depth measurement:', error);
+  //       }
+  //     }, 2000);
+  //   }
+  //
+  //   return () => {
+  //     if (intervalId) {
+  //       clearInterval(intervalId);
+  //     }
+  //   };
+  // }, [isScanning, ScanData.scanId]);
 
   // Load scan history from API
   const loadScanHistory = async () => {
     try {
       setLoading(true);
-      const response = await ApiManager.getScanHistory(token);
+      const response = await ApiManager.getScanHistory();
       setScanHistory(response.data || []);
     } catch (error) {
       console.error('Failed to load scan history:', error);
       setError('Failed to load scan history');
     } finally {
       setLoading(false);
-    }
-  };
+    }  };
 
-  // Simulate scanning process
-  useEffect(() => {
-    if (isScanning) {
-      const interval = setInterval(() => {
-        setScanProgress(prev => {
-          if (prev >= 100) {
-            setIsScanning(false);
-            setInfraredValue(Math.floor(Math.random() * 100) + 50); // Random infrared value
-            loadScanHistory(); // Reload history after scan completion
-            return 100;
-          }
-          return prev + 2;
-        });
-      }, 100);
-
-      return () => clearInterval(interval);
-    }
-  }, [isScanning]);  const handleStartScan = async () => {
+  // Start scan handler - calls actual API endpoint
+  const handleStartScan = async () => {
     try {
       setIsScanning(true);
-      setScanProgress(0);
-      setInfraredValue(null);
+   
       setError(null);
-      
+      setScanData({});
       console.log('Starting infrared scan');
       
       // Call real API endpoint
-      const response = await ApiManager.startScan(token);
-      
-      if (response.success) {
-        console.log('Scan started successfully:', response.message);
+      const response = await ApiManager.startScan();
+      if (response && response.data && response.data.success) {
+        setScanData({scanId: response.data.scanId, depthMeasurement: response.data.depthMeasurement});
+        console.log('Scan started successfully:', response.data.message);
+
       } else {
-        throw new Error(response.message || 'Failed to start scan');
+        throw new Error(response?.data?.message || 'Failed to start scan');
       }
       
     } catch (error) {
@@ -70,28 +81,41 @@ export default function Scanner() {
       setError(error.message || 'Failed to start scan');
       setIsScanning(false);
     }
-  };
-  const handleStopScan = async () => {
+  };   const handleStopScan = async () => {
     try {
       setIsScanning(false);
-      setScanProgress(0);
       setError(null);
       
-      console.log('Stopping scan');
+      console.log('Stopping scan with ID:', ScanData.scanId);
       
-      // Call real API endpoint
-      const response = await ApiManager.stopScan(token);
+      // Prepare data for stop scan - use default depth if null
+      const stopScanData = {
+        scanId: ScanData.scanId,
+        depthMeasurement: ScanData.depthMeasurement ?? 10 // Default to 10 if null/undefined
+      };
       
-      if (response.success) {
-        console.log('Scan stopped successfully:', response.message);
+      console.log('Stop scan data:', stopScanData);
+      
+      // Call stop endpoint - backend/hardware will handle sending final depth measurement
+      const response = await ApiManager.stopScan(stopScanData);
+      
+      if (response && response.data && response.data.success) {
+        // Update with final data from hardware
+        setScanData({
+          scanId: response.data.scanId, 
+          depthMeasurement: response.data.depthMeasurement,
+          status: response.data.status
+        });
+        console.log('Scan stopped successfully:', response.data.message);
         await loadScanHistory(); // Reload history
       } else {
-        throw new Error(response.message || 'Failed to stop scan');
+        throw new Error(response?.data?.message || 'Failed to stop scan');
       }
       
     } catch (error) {
       console.error('API call failed:', error);
       setError(error.message || 'Failed to stop scan');
+      setIsScanning(true); // Reset scanning state on error
     }
   };
   return (
@@ -157,23 +181,7 @@ export default function Scanner() {
                 >
                   <i className="fa-solid fa-stop mr-2"></i>
                   Stop Scan
-                </button>
-              </div>
-
-              {/* Progress Bar */}
-              {isScanning && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span>Scanning Progress</span>
-                    <span>{scanProgress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-200"
-                      style={{ width: `${scanProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
+                </button>              </div>
             </div>
           </div>
 
@@ -186,10 +194,10 @@ export default function Scanner() {
 
             <div className="text-center">
               <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-4 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center">
-                {infraredValue !== null ? (
+                {ScanData.depthMeasurement !== null ? (
                   <div>
                     <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
-                      {infraredValue}
+                      {ScanData.depthMeasurement}
                     </div>
                     <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">mm</div>
                   </div>
@@ -203,8 +211,8 @@ export default function Scanner() {
                 Depth Measurement
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                {infraredValue !== null 
-                  ? `Detected depth: ${infraredValue}mm`
+                {ScanData.depthMeasurement !== null 
+                  ? `Detected depth: ${ScanData.depthMeasurement}mm`
                   : 'No reading available'
                 }
               </p>            </div>
@@ -212,7 +220,8 @@ export default function Scanner() {
         </div>
 
         {/* Scan History */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">     
+               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
             <i className="fa-solid fa-history mr-2 text-green-600"></i>
             Recent Scans
           </h2>
@@ -221,6 +230,7 @@ export default function Scanner() {
               <table className="w-full text-sm text-left">
                 <thead className="text-xs text-gray-700 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-700">
                   <tr>
+                    <th className="px-3 sm:px-6 py-3">Date</th>
                     <th className="px-3 sm:px-6 py-3">Time</th>
                     <th className="px-3 sm:px-6 py-3">Depth (mm)</th>
                     <th className="px-3 sm:px-6 py-3">Status</th>
@@ -229,7 +239,7 @@ export default function Scanner() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="3" className="px-3 sm:px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan="4" className="px-3 sm:px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                         <i className="fa-solid fa-spinner fa-spin mr-2"></i>
                         Loading scan history...
                       </td>
@@ -238,10 +248,13 @@ export default function Scanner() {
                     scanHistory.map((scan, index) => (
                       <tr key={scan.id || index} className="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
                         <td className="px-3 sm:px-6 py-4 font-medium text-gray-900 dark:text-white text-xs sm:text-sm">
-                          {new Date(scan.timestamp || scan.time).toLocaleTimeString()}
+                          {new Date(scan.scanTime).toLocaleDateString()}
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 font-medium text-gray-900 dark:text-white text-xs sm:text-sm">
+                          {new Date(scan.scanTime).toLocaleTimeString()}
                         </td>
                         <td className="px-3 sm:px-6 py-4 text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
-                          {scan.depth || scan.value || 'N/A'}
+                          {scan.depthMeasurement.toFixed(3)} mm
                         </td>
                         <td className="px-3 sm:px-6 py-4">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -258,7 +271,7 @@ export default function Scanner() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="3" className="px-3 sm:px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan="4" className="px-3 sm:px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                         No scan history available
                       </td>
                     </tr>

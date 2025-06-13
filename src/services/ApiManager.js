@@ -1,164 +1,184 @@
+import axios from "axios";
+
 // API Manager for ovoVax - Automated In-Ovo Vaccination System
-// Contains only the essential API methods that are actively used by React components
-// Cleaned up version with unused methods removed for better maintainability
+// Only includes endpoints that actually exist in the backend
+// No authentication endpoints until backend implements them
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7268/api';
+// const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://ovovax.runasp.net/api";
+const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://localhost:7268/api";
 
-// Helper function to get headers
-const getHeaders = (token = null, contentType = 'application/json') => {
-  const headers = {
-    'Content-Type': contentType,
+// Helper function to get headers (no token for now)
+const getHeaders = () => {
+  return {
+    "Content-Type": "application/json",
   };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
-  return headers;
-};
-
-// Helper function for API requests
-const apiRequest = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...getHeaders(options.token, options.contentType),
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Network error' }));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`API Error (${endpoint}):`, error);
-    throw error;
-  }
 };
 
 export default class ApiManager {
-  
+
   // ==================== SCANNER APIS ====================
 
   /**
    * Start Scanner
-   * @param {string} token 
-   * @returns {Promise<Object>} scan response
+   * @returns {Object} scan response
    */
-  static async startScan(token) {
-    return apiRequest('/scanner/start', {
-      method: 'POST',
-      token,
-    });
-  }
-
-  /**
+  static async startScan() {
+    const axiosResult = await axios.get(
+      baseUrl + "/Scanner/start",
+      {
+        headers: getHeaders(),
+      }
+    );
+    return axiosResult;
+  }  /**
    * Stop Scanner
-   * @param {string} token 
-   * @returns {Promise<Object>} scan response
+   * @param {Object} scanData - { scanId, depthMeasurement } - depthMeasurement defaults to 10 if null
+   * @returns {Object} scan response
    */
-  static async stopScan(token) {
-    return apiRequest('/scanner/stop', {
-      method: 'POST',
-      token,
-    });
+  static async stopScan(scanData) {
+    const axiosResult = await axios.post(
+      baseUrl + "/Scanner/stop",
+      scanData,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return axiosResult;
   }
   /**
    * Get Scanner History
-   * @param {string} token 
-   * @returns {Promise<Object>} scan history data
+   * @returns {Object} scan history data
    */
-  static async getScanHistory(token) {
-    return apiRequest('/scanner/history', {
-      method: 'GET',
-      token,
+  static async getScanHistory() {
+    const axiosResult = await axios.get(baseUrl + "/Scanner/history", {
+      headers: getHeaders(),
     });
+    return axiosResult;
   }
 
+  // TODO: Add getCurrentDepthMeasurement when hardware integration is ready
+  // /**
+  //  * Get Current Depth Measurement (for real-time updates)
+  //  * @returns {Object} current depth measurement
+  //  */
+  // static async getCurrentDepthMeasurement() {
+  //   const axiosResult = await axios.get(baseUrl + "/Scanner/current-depth", {
+  //     headers: getHeaders(),
+  //   });
+  //   return axiosResult;
+  // }
   // ==================== INJECTION APIS ====================
 
   /**
-   * Start Injection
-   * @param {string} token 
-   * @param {Object} injectionData - { rangeOfInfrared, stepOfInjection, volumeOfLiquid, numberOfElements }
-   * @returns {Promise<Object>} injection response
+   * Start Injection Operation
+   * @param {Object} injectionData - { rangeOfInfraredFrom, rangeOfInfraredTo, stepOfInjection, volumeOfLiquid, numberOfElements }
+   * @returns {Object} injection response with operationId
    */
-  static async startInjection(token, injectionData) {
-    return apiRequest('/injection/start', {
-      method: 'POST',
-      body: JSON.stringify(injectionData),
-      token,
-    });
+  static async startInjection(injectionData) {
+    const axiosResult = await axios.post(
+      baseUrl + "/Injection/start",
+      injectionData,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return axiosResult;
+  }
+  /**
+   * Stop Injection Operation
+   * @param {Object} stopData - { operationId }
+   * @returns {Object} injection response
+   */
+  static async stopInjection(stopData) {
+    const axiosResult = await axios.post(
+      baseUrl + "/Injection/stop",
+      stopData,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return axiosResult;
   }
 
   /**
-   * Stop Injection
-   * @param {string} token 
-   * @returns {Promise<Object>} injection response
+   * Check if Injection Operation is Completed
+   * @param {Object} statusData - { operationId }
+   * @returns {boolean} true if completed, false if still in progress
    */
-  static async stopInjection(token) {
-    return apiRequest('/injection/stop', {
-      method: 'POST',
-      token,
-    });
+  static async checkInjectionStatus(statusData) {
+    const axiosResult = await axios.post(
+      baseUrl + "/Injection/status",
+      statusData,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return axiosResult;
   }
+
   /**
    * Get Injection History
-   * @param {string} token 
-   * @returns {Promise<Object>} injection history data
+   * @returns {Object} injection operations history
    */
-  static async getInjectionHistory(token) {
-    return apiRequest('/injection/history', {
-      method: 'GET',
-      token,
+  static async getInjectionHistory() {
+    const axiosResult = await axios.get(baseUrl + "/Injection/history", {
+      headers: getHeaders(),
     });
+    return axiosResult;
   }
 
   // ==================== MANUAL CONTROL APIS ====================
 
   /**
    * Move Axis
-   * @param {string} token 
    * @param {Object} movementData - { axis, direction, step, speed }
-   * @returns {Promise<Object>} movement response
+   * @returns {Object} movement response
    */
-  static async moveAxis(token, movementData) {
-    return apiRequest('/movement/move', {
-      method: 'POST',
-      body: JSON.stringify(movementData),
-      token,
-    });
+  static async moveAxis(movementData) {
+    const axiosResult = await axios.post(
+      baseUrl + "/Movement/move",
+      movementData,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return axiosResult;
   }
 
   /**
    * Home All Axes
-   * @param {string} token 
-   * @returns {Promise<Object>} movement response
+   * @returns {Object} movement response
    */
-  static async homeAxes(token) {
-    return apiRequest('/movement/home', {
-      method: 'POST',
-      token,
-    });
+  static async homeAxes() {
+    const axiosResult = await axios.post(
+      baseUrl + "/Movement/home",
+      {},
+      {
+        headers: getHeaders(),
+      }
+    );
+    return axiosResult;
   }
+
   /**
    * Get Movement History
-   * @param {string} token 
-   * @returns {Promise<Object>} movement history data
+   * @returns {Object} movement history data
    */
-  static async getMovementHistory(token) {
-    return apiRequest('/movement/history', {
-      method: 'GET',
-      token,
+  static async getMovementHistory() {
+    const axiosResult = await axios.get(baseUrl + "/Movement/history", {
+      headers: getHeaders(),
     });
+    return axiosResult;
+  }
+
+  /**
+   * Get Movement Status
+   * @returns {Object} movement status
+   */
+  static async getMovementStatus() {
+    const axiosResult = await axios.get(baseUrl + "/Movement/status", {
+      headers: getHeaders(),
+    });
+    return axiosResult;
   }
 }
-
-// Export for easy importing
-export { ApiManager };

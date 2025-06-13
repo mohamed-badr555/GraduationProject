@@ -1,5 +1,5 @@
 import React from 'react';
-import { createHashRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import FixedDarkModeToggle from './Component/Ui/FixedDarkModeToggle/FixedDarkModeToggle';
@@ -11,14 +11,14 @@ import Login from './Pages/Login';
 import Register from './Pages/Register';
 import ForgotPassword from './Pages/ForgotPassword';
 import Dashboard from './Pages/Dashboard';
-import Alerts from './Pages/Alerts';
-import Reports from './Pages/Reports';
 import Scanner from './Pages/Scanner';
 import Injection from './Pages/Injection';
 import ManualControl from './Pages/ManualControl';
+import Alerts from './Pages/Alerts';
+import Reports from './Pages/Reports';
 
 // Create the router configuration
-const router = createHashRouter([
+const router = createBrowserRouter([
   // Public Authentication Routes
   {
     path: "/login",
@@ -32,32 +32,15 @@ const router = createHashRouter([
     path: "/forgot-password",
     element: <ForgotPassword />
   },
-  
-  // Protected Dashboard Routes
-  {
+    // Protected Dashboard Routes  
+    {
     path: "/",
     element: (
       <ProtectedRoute>
         <Dashboard />
-      </ProtectedRoute>    )
-  },
-  {
-    path: "/alerts",
-    element: (
-      <ProtectedRoute>
-        <Alerts />
       </ProtectedRoute>
     )
   },
-  {
-    path: "/reports",
-    element: (
-      <ProtectedRoute>
-        <Reports />
-      </ProtectedRoute>
-    )
-  },
- 
   {
     path: "/scanner",
     element: (
@@ -82,13 +65,31 @@ const router = createHashRouter([
       </ProtectedRoute>
     )
   },
+  {
+    path: "/alerts",
+    element: (
+      <ProtectedRoute>
+        <Alerts />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: "/reports",
+    element: (
+      <ProtectedRoute>
+        <Reports />
+      </ProtectedRoute>
+    )
+  },
   
   // Fallback route
   {
     path: "*",
     element: <Navigate to="/" replace />
   }
-]);
+], {
+  basename: import.meta.env.MODE === 'production' ? '/GraduationProject' : ''
+});
 
 function App() {
   return (
