@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: process.env.NODE_ENV === 'production' ? '/GraduationProject/' : '/',
+  base: '/GraduationProject/', // Always use this base for GitHub Pages
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
