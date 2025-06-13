@@ -14,7 +14,6 @@ const getHeaders = () => {
   };
 };
 
-
 export default class ApiManager {
 
   // ==================== SCANNER APIS ====================
