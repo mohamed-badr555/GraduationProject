@@ -4,7 +4,7 @@ import axios from "axios";
 // Only includes endpoints that actually exist in the backend
 // No authentication endpoints until backend implements them
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://ovovax.runasp.net/api";
+const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://ovovax.runasp.net/api";
 // const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://localhost:7268/api";
 
 // Helper function to get headers (no token for now)
@@ -57,17 +57,6 @@ export default class ApiManager {
     return axiosResult;
   }
 
-  // TODO: Add getCurrentDepthMeasurement when hardware integration is ready
-  // /**
-  //  * Get Current Depth Measurement (for real-time updates)
-  //  * @returns {Object} current depth measurement
-  //  */
-  // static async getCurrentDepthMeasurement() {
-  //   const axiosResult = await axios.get(baseUrl + "/Scanner/current-depth", {
-  //     headers: getHeaders(),
-  //   });
-  //   return axiosResult;
-  // }
   // ==================== INJECTION APIS ====================
 
   /**
@@ -145,15 +134,15 @@ export default class ApiManager {
     );
     return axiosResult;
   }
-
   /**
    * Home All Axes
+   * @param {Object} homeData - Empty object for HomeRequestDto
    * @returns {Object} movement response
    */
-  static async homeAxes() {
+  static async homeAxes(homeData = {}) {
     const axiosResult = await axios.post(
       baseUrl + "/Movement/home",
-      {},
+      homeData,
       {
         headers: getHeaders(),
       }

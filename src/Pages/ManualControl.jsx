@@ -15,6 +15,46 @@ const ManualControl = () => {
     loadMovementHistory();
   }, []);
 
+  // Helper function to parse backend validation errors
+  const parseBackendError = (error) => {
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      
+      // Handle validation errors (400 status with errors object)
+      if (errorData.errors && typeof errorData.errors === 'object') {
+        const errorMessages = [];
+        Object.keys(errorData.errors).forEach(field => {
+          const fieldErrors = errorData.errors[field];
+          if (Array.isArray(fieldErrors)) {
+            fieldErrors.forEach(msg => {
+              // Format field name for better readability
+              const fieldName = field.replace(/([A-Z])/g, ' $1').trim();
+              errorMessages.push(`${fieldName}: ${msg}`);
+            });
+          } else {
+            const fieldName = field.replace(/([A-Z])/g, ' $1').trim();
+            errorMessages.push(`${fieldName}: ${fieldErrors}`);
+          }
+        });
+        return errorMessages.join('\n');
+      }
+      
+      // Handle single error message
+      if (errorData.message) {
+        return errorData.message;
+      }
+      
+      // Handle title from validation response
+      if (errorData.title) {
+        return errorData.title;
+      }
+    }
+    
+    // Fallback to generic error message
+    return error.message || 'An unexpected error occurred';
+  };
+
+
   // Load movement history from API
   const loadMovementHistory = async () => {
     try {
@@ -23,23 +63,28 @@ const ManualControl = () => {
       setMovementHistory(response.data || []);
     } catch (error) {
       console.error('Failed to load movement history:', error);
-      setError('Failed to load movement history');
+      console.error('Error response:', error.response?.data);
+      
+      const errorMessage = parseBackendError(error);
+      setError(`Failed to load movement history: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   };
+
+
+
   const moveAxis = useCallback(async (axis, direction, step = 1) => {
     if (isMoving || isHoming) return;
-    
+
     setIsMoving(true);
     setError(null);
     
     try {
       console.log(`Moving ${axis.toUpperCase()}${direction > 0 ? '+' : '-'} at ${speed}% speed`);
-      
-      const movementData = {
-        axis: axis,
-        direction: direction > 0 ? 'positive' : 'negative',
+        const movementData = {
+        axis: axis.toUpperCase(), // Ensure axis is uppercase (Z, Y)
+        direction: direction > 0 ? 1 : -1, // Use numeric values for direction enum
         step: step,
         speed: speed
       };
@@ -52,14 +97,22 @@ const ManualControl = () => {
       } else {
         throw new Error(response?.data?.message || 'Failed to move axis');
       }
-      
-    } catch (error) {
+        } catch (error) {
       console.error('API call failed:', error);
-      setError(error.message || 'Failed to move axis');
+      console.error('Error response:', error.response?.data);
+      
+      const errorMessage = parseBackendError(error);
+      setError(errorMessage);
     } finally {
       setIsMoving(false);
     }
-  }, [speed, isMoving, isHoming, token, loadMovementHistory]);  const homeAllAxes = useCallback(async () => {
+  }, [speed, isMoving, isHoming, loadMovementHistory]);
+  
+
+
+
+
+    const homeAllAxes = useCallback(async () => {
     if (isMoving || isHoming) return;
     
     setIsHoming(true);
@@ -76,15 +129,21 @@ const ManualControl = () => {
       } else {
         throw new Error(response?.data?.message || 'Failed to home axes');
       }
-      
-    } catch (error) {
+        } catch (error) {
       console.error('API call failed:', error);
-      setError(error.message || 'Failed to home axes');
+      console.error('Error response:', error.response?.data);
+      
+      const errorMessage = parseBackendError(error);
+      setError(errorMessage);
     } finally {
       setIsHoming(false);
     }
-  }, [isMoving, isHoming, token, loadMovementHistory]);
+  }, [isMoving, isHoming, loadMovementHistory]);
+
+
+
   const DirectionalButton = ({ direction, axis, icon, disabled }) => (
+
     <button
       onClick={() => moveAxis(axis, direction)}
       disabled={disabled || isMoving || isHoming}
@@ -97,8 +156,9 @@ const ManualControl = () => {
       `}
     >
       <i className={`fas ${icon} text-2xl`}></i>
-    </button>
+    </button> 
   );
+
   return (
     <DashboardLayout>
       <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-full">
@@ -112,17 +172,20 @@ const ManualControl = () => {
             <p className="text-gray-600 dark:text-gray-300">
               Control Z and Y axis movement with precision
             </p>
-          </div>
+          </div>   
 
-          {/* Error Display */}
+
+                 {/* Error Display */}
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-              <div className="flex items-center">
-                <i className="fa-solid fa-exclamation-triangle text-red-500 mr-2"></i>
-                <p className="text-red-800 dark:text-red-400 font-medium">{error}</p>
+              <div className="flex items-start">
+                <i className="fa-solid fa-exclamation-triangle text-red-500 mr-2 mt-0.5"></i>
+                <div className="flex-1">
+                  <p className="text-red-800 dark:text-red-400 font-medium whitespace-pre-line">{error}</p>
+                </div>
                 <button 
                   onClick={() => setError(null)}
-                  className="ml-auto text-red-500 hover:text-red-700 dark:hover:text-red-300"
+                  className="ml-auto text-red-500 hover:text-red-700 dark:hover:text-red-300 flex-shrink-0"
                 >
                   <i className="fa-solid fa-times"></i>
                 </button>
@@ -138,7 +201,8 @@ const ManualControl = () => {
                 <p className="text-blue-800 dark:text-blue-400 font-medium">Loading...</p>
               </div>
             </div>
-          )}     
+          )}  
+
                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8">
             {/* Control Panel */}
             <div className="space-y-4 lg:space-y-6">
@@ -154,7 +218,9 @@ const ManualControl = () => {
                     <span className="text-lg font-semibold text-gray-900 dark:text-white">
                       {speed}%
                     </span>
-                  </div>                  <input
+                  </div>    
+
+                      <input
                     type="range"
                     min="1"
                     max="100"
@@ -173,7 +239,8 @@ const ManualControl = () => {
                     <span>Fast</span>
                   </div>
                 </div>
-              </div>              {/* Home Button */}
+              </div>       
+                     {/* Home Button */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   <i className="fas fa-home text-purple-500 mr-2"></i>
@@ -203,7 +270,9 @@ const ManualControl = () => {
                   )}
                 </button>
               </div>
-            </div>            {/* Movement Controls */}
+            </div>    
+
+                {/* Movement Controls */}
             <div className="space-y-4 lg:space-y-6">
               {/* Z Axis Control */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
@@ -306,7 +375,7 @@ const ManualControl = () => {
                         </td>
                         <td className="py-3 px-4">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
-                            {movement.action || movement.command}
+                            {movement.action}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-gray-600 dark:text-gray-300">
@@ -342,6 +411,7 @@ const ManualControl = () => {
                 </tbody></table>
             </div>
           </div>
+
         </div>
       </div>
     </DashboardLayout>

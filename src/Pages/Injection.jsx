@@ -16,7 +16,8 @@ const Injection = () => {
   const [rangeOfInfraredFrom, setRangeOfInfraredFrom] = useState('');
   const [rangeOfInfraredTo, setRangeOfInfraredTo] = useState('');
   const [stepOfInjection, setStepOfInjection] = useState('');
-  const [volumeOfLiquid, setVolumeOfLiquid] = useState('');  const [numberOfElements, setNumberOfElements] = useState('');
+  const [volumeOfLiquid, setVolumeOfLiquid] = useState(''); 
+   const [numberOfElements, setNumberOfElements] = useState('');
   // Load injection history on component mount
   useEffect(() => {
     loadInjectionHistory();
