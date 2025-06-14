@@ -118,6 +118,7 @@ export default function Scanner() {
       setIsScanning(true); // Reset scanning state on error
     }
   };
+  
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
