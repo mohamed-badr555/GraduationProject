@@ -73,8 +73,7 @@ const ManualControl = () => {
   };
 
 
-
-  const moveAxis = useCallback(async (axis, direction, step = 1) => {
+  const moveAxis = useCallback(async (axis, direction) => {
     if (isMoving || isHoming) return;
 
     setIsMoving(true);
@@ -82,22 +81,24 @@ const ManualControl = () => {
     
     try {
       console.log(`Moving ${axis.toUpperCase()}${direction > 0 ? '+' : '-'} at ${speed}% speed`);
-        const movementData = {
+      
+      const movementData = {
         axis: axis.toUpperCase(), // Ensure axis is uppercase (Z, Y)
         direction: direction > 0 ? 1 : -1, // Use numeric values for direction enum
-        step: step,
         speed: speed
       };
       
       // Call real API endpoint
       const response = await ApiManager.moveAxis(movementData);
-        if (response && response.data && response.data.success) {
+      
+      if (response && response.data && response.data.success) {
         console.log('Movement completed successfully:', response.data.message);
         await loadMovementHistory(); // Reload history
       } else {
         throw new Error(response?.data?.message || 'Failed to move axis');
       }
-        } catch (error) {
+      
+    } catch (error) {
       console.error('API call failed:', error);
       console.error('Error response:', error.response?.data);
       
@@ -110,26 +111,27 @@ const ManualControl = () => {
   
 
 
-
-
-    const homeAllAxes = useCallback(async () => {
+  const homeAllAxes = useCallback(async () => {
     if (isMoving || isHoming) return;
     
     setIsHoming(true);
     setError(null);
     
     try {
-      console.log('Homing all axes...');
+      console.log(`Homing all axes at ${speed}% speed...`);
       
-      // Call real API endpoint
-      const response = await ApiManager.homeAxes();
-        if (response && response.data && response.data.success) {
+      // Call real API endpoint with speed parameter
+      const homeData = { speed: speed };
+      const response = await ApiManager.homeAxes(homeData);
+      
+      if (response && response.data && response.data.success) {
         console.log('Homing completed successfully:', response.data.message);
         await loadMovementHistory(); // Reload history
       } else {
         throw new Error(response?.data?.message || 'Failed to home axes');
       }
-        } catch (error) {
+      
+    } catch (error) {
       console.error('API call failed:', error);
       console.error('Error response:', error.response?.data);
       

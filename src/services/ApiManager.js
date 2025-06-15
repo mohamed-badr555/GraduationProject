@@ -4,8 +4,8 @@ import axios from "axios";
 // Only includes endpoints that actually exist in the backend
 // No authentication endpoints until backend implements them
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://ovovax.runasp.net/api";
-// const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://localhost:7268/api";
+// const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://ovovax.runasp.net/api";
+const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://localhost:7268/api";
 
 // Helper function to get headers (no token for now)
 const getHeaders = () => {
@@ -16,12 +16,12 @@ const getHeaders = () => {
 
 
 export default class ApiManager {
-
   // ==================== SCANNER APIS ====================
 
   /**
    * Start Scanner
-   * @returns {Object} scan response
+   * @returns {Object} scan response with scanId
+   * Response: { success: boolean, message: string, scanId: number, status: string|null, readings: number[]|null, readingCount: number }
    */
   static async startScan() {
     const axiosResult = await axios.get(
@@ -31,24 +31,29 @@ export default class ApiManager {
       }
     );
     return axiosResult;
-  }  /**
+  }
+
+  /**
    * Stop Scanner
-   * @param {Object} scanData - { scanId, depthMeasurement } - depthMeasurement defaults to 10 if null
-   * @returns {Object} scan response
+   * @param {Object} stopData - { scanId: number }
+   * @returns {Object} scan response with readings array
+   * Response: { success: boolean, message: string, scanId: number, status: string, readings: number[], readingCount: number }
    */
-  static async stopScan(scanData) {
+  static async stopScan(stopData) {
     const axiosResult = await axios.post(
       baseUrl + "/Scanner/stop",
-      scanData,
+      stopData,
       {
         headers: getHeaders(),
       }
     );
     return axiosResult;
   }
+
   /**
    * Get Scanner History
    * @returns {Object} scan history data
+   * Response: Array of { id: number, scanTime: string, sensorReadings: number[], readingCount: number, status: string, errorMessage: string|null }
    */
   static async getScanHistory() {
     const axiosResult = await axios.get(baseUrl + "/Scanner/history", {
@@ -118,10 +123,9 @@ export default class ApiManager {
   }
 
   // ==================== MANUAL CONTROL APIS ====================
-
   /**
    * Move Axis
-   * @param {Object} movementData - { axis, direction, step, speed }
+   * @param {Object} movementData - { axis, direction, speed } - step removed, hardware handles it internally
    * @returns {Object} movement response
    */
   static async moveAxis(movementData) {
@@ -133,10 +137,9 @@ export default class ApiManager {
       }
     );
     return axiosResult;
-  }
-  /**
+  }  /**
    * Home All Axes
-   * @param {Object} homeData - Empty object for HomeRequestDto
+   * @param {Object} homeData - { speed } - speed parameter added (1-100, default 50)
    * @returns {Object} movement response
    */
   static async homeAxes(homeData = {}) {
