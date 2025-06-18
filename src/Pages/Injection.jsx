@@ -27,8 +27,7 @@ const Injection = () => {
   useEffect(() => {
     let statusInterval;
     
-    if (isInjecting && currentOperationId) {
-      // Poll every 3 seconds to check if injection is completed
+    if (isInjecting && currentOperationId) {      // Poll every 3 seconds to check if injection is completed
       statusInterval = setInterval(async () => {
         try {
           console.log('Checking injection status for operation:', currentOperationId);
@@ -36,16 +35,48 @@ const Injection = () => {
             operationId: currentOperationId
           });
           
-          // Backend returns true if completed, false if still in progress
-          if (response.data === true) {
-            console.log('Injection completed by ESP32!');
-            setIsInjecting(false);
-            setCurrentOperationId(null);
-            await loadInjectionHistory(); // Reload history to show completed operation
+          console.log('Status response:', response.data);
+          
+          // Check if injection is completed based on response data
+          if (response.data && response.data.success) {
+            const statusData = response.data.data;
+              // Check if injection is completed
+            if (statusData && (statusData.isCompleted || statusData.status === 'Completed')) {
+              console.log('Injection completed successfully!');
+              
+              // Call complete injection endpoint
+              try {
+                await ApiManager.completeInjection({ operationId: currentOperationId });
+                console.log('Injection marked as complete');
+              } catch (completeError) {
+                console.error('Failed to complete injection:', completeError);
+                // Continue anyway to stop the UI
+              }
+              
+              setIsInjecting(false);
+              setCurrentOperationId(null);
+              await loadInjectionHistory(); // Reload history to show completed operation
+            }
           }
         } catch (error) {
           console.error('Failed to check injection status:', error);
-          // Don't show error to user for status polling
+            // If we get a 404 or operation not found, it means injection completed
+          if (error.response && error.response.status === 404) {
+            console.log('Injection operation completed (not found in active operations)');
+            
+            // Try to call complete injection endpoint anyway
+            try {
+              await ApiManager.completeInjection({ operationId: currentOperationId });
+              console.log('Injection marked as complete');
+            } catch (completeError) {
+              console.error('Failed to complete injection:', completeError);
+              // Continue anyway to stop the UI
+            }
+            
+            setIsInjecting(false);
+            setCurrentOperationId(null);
+            await loadInjectionHistory();
+          }
         }
       }, 3000); // Check every 3 seconds
     }

@@ -247,7 +247,7 @@ const ManualControl = () => {
                     <input
                       type="range"
                       min="1"
-                      max="10000"
+                      max="50000"
                       value={steps}
                       onChange={(e) => setSteps(parseInt(e.target.value))}
                       disabled={isMoving || isHoming}
@@ -260,7 +260,7 @@ const ManualControl = () => {
                     />
                     <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
                       <span>1 step</span>
-                      <span>10000 steps</span>
+                      <span>50000 steps</span>
                     </div>
 
                     {/* Direct input for precise steps */}
@@ -268,9 +268,9 @@ const ManualControl = () => {
                       <input
                         type="number"
                         min="1"
-                        max="10000"
+                        max="50000"
                         value={steps}
-                        onChange={(e) => setSteps(Math.max(1, Math.min(10000, parseInt(e.target.value) || 1)))}
+                        onChange={(e) => setSteps(Math.max(1, Math.min(50000, parseInt(e.target.value) || 1)))}
                         disabled={isMoving || isHoming}
                         className="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />

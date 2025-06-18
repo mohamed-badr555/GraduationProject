@@ -94,7 +94,6 @@ export default class ApiManager {
     );
     return axiosResult;
   }
-
   /**
    * Check if Injection Operation is Completed
    * @param {Object} statusData - { operationId }
@@ -104,6 +103,22 @@ export default class ApiManager {
     const axiosResult = await axios.post(
       baseUrl + "/Injection/status",
       statusData,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return axiosResult;
+  }
+
+  /**
+   * Complete Injection Operation
+   * @param {Object} completeData - { operationId }
+   * @returns {Object} injection response
+   */
+  static async completeInjection(completeData) {
+    const axiosResult = await axios.post(
+      baseUrl + "/Injection/complete",
+      completeData,
       {
         headers: getHeaders(),
       }
