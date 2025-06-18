@@ -1,16 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSidebar } from '../../context/SidebarContext';
 import { useNavigate } from 'react-router-dom';
+import ApiManager from '../../services/ApiManager';
 
 export default function Header() {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
   const { toggleSidebar, isMobile } = useSidebar();
-  const navigate = useNavigate();
+  const navigate = useNavigate();  const [esp32Status, setEsp32Status] = useState(null);
+
+  // Check ESP32 status on component mount and set up interval
+  useEffect(() => {
+    checkEsp32Status();
+      // Check ESP32 status every 10 seconds
+    const statusInterval = setInterval(() => {
+      checkEsp32Status();
+    }, 10000);
+
+    return () => clearInterval(statusInterval);
+  }, []);
+  // Function to check ESP32 status
+  const checkEsp32Status = async () => {
+    try {
+      const response = await ApiManager.getEsp32Status();
+      if (response && response.data) {
+        setEsp32Status(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to check ESP32 status:', error);
+      setEsp32Status({ connected: false, error: 'Connection failed' });
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -46,19 +70,54 @@ export default function Header() {
               <p className="text-xs text-gray-500 dark:text-gray-400">Automated In-Ovo Vaccination</p>
             </div>
           </div>
-        </div>
-
-        {/* Right Side - Status and User Menu */}
-        <div className="flex items-center space-x-2 sm:space-x-4">
-          {/* System Status */}
-          <div className="hidden sm:flex items-center px-2 sm:px-3 py-1 sm:py-2 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></div>
-            <span className="text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-medium">System Active</span>
+        </div>        {/* Right Side - ESP32 Status and User Menu */}
+        <div className="flex items-center space-x-2 sm:space-x-4">          {/* ESP32 System Status */}
+          <div className="hidden sm:flex items-center">
+            {esp32Status ? (
+              <div 
+                className={`flex items-center px-2 sm:px-3 py-1 sm:py-2 border rounded-lg ${
+                  esp32Status.connected 
+                    ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700'
+                    : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700'
+                }`}
+                title={`ESP32 Status: ${esp32Status.connected ? 'Connected' : 'Disconnected'}`}
+              >
+                <div className={`h-2 w-2 rounded-full mr-2 ${
+                  esp32Status.connected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
+                }`}></div>
+                <span className={`text-xs sm:text-sm font-medium ${
+                  esp32Status.connected 
+                    ? 'text-emerald-700 dark:text-emerald-300' 
+                    : 'text-red-700 dark:text-red-300'
+                }`}>
+                  Connection {esp32Status.connected ? 'Online' : 'Offline'}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center px-2 sm:px-3 py-1 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+                <i className="fas fa-spinner fa-spin text-gray-500 mr-2 text-xs"></i>
+                <span className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm font-medium">Checking...</span>
+              </div>
+            )}
           </div>
-          
-          {/* Mobile System Status (Icon Only) */}
-          <div className="sm:hidden flex items-center justify-center h-8 w-8 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            {/* Mobile ESP32 Status (Icon Only) */}
+          <div 
+            className={`sm:hidden flex items-center justify-center h-8 w-8 border rounded-lg ${
+              esp32Status?.connected 
+                ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700'
+                : esp32Status?.connected === false
+                ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700'
+                : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'
+            }`}
+            title={esp32Status ? `ESP32 ${esp32Status.connected ? 'Online' : 'Offline'}` : 'Checking ESP32...'}
+          >
+            {esp32Status ? (
+              <div className={`h-2 w-2 rounded-full ${
+                esp32Status.connected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
+              }`}></div>
+            ) : (
+              <i className="fas fa-spinner fa-spin text-gray-500 text-xs"></i>
+            )}
           </div>
           
           {/* Notifications */}

@@ -8,15 +8,12 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
+  const [error, setError] = useState('');  const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    organization: '',
-    role: '',
     agreeToTerms: false
   });
 
@@ -60,14 +57,11 @@ const Register = () => {
     setLoading(true);
     setError('');
 
-    try {
-      const result = await register({
+    try {      const result = await register({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        password: formData.password,
-        organization: formData.organization,
-        role: formData.role
+        password: formData.password
       });
 
       if (result.success) {
@@ -203,50 +197,6 @@ const Register = () => {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i className="fa-solid fa-at text-gray-400 dark:text-gray-500"></i>
               </div>
-            </div>
-          </motion.div>          {/* Organization and Role */}
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
-            variants={itemVariants}
-          >
-            <div>
-              <label htmlFor="organization" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <i className="fa-solid fa-building mr-2 text-emerald-600"></i>
-                Organization
-              </label>
-              <motion.input
-                id="organization"
-                name="organization"
-                type="text"
-                value={formData.organization}
-                onChange={handleInputChange}
-                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200"
-                placeholder="Your farm or company"
-                whileFocus={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-              />
-            </div>
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <i className="fa-solid fa-user-tie mr-2 text-emerald-600"></i>
-                Role
-              </label>
-              <motion.select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleInputChange}
-                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200"
-                whileFocus={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-              >
-                <option value="">Select your role</option>
-                <option value="farm-manager">Farm Manager</option>
-                <option value="veterinarian">Veterinarian</option>
-                <option value="technician">Technician</option>
-                <option value="researcher">Researcher</option>
-                <option value="other">Other</option>
-              </motion.select>
             </div>
           </motion.div>          {/* Password Field */}
           <motion.div variants={itemVariants}>

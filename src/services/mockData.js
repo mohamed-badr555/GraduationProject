@@ -223,13 +223,18 @@ export const mockApi = {
     }
     throw new Error('Invalid credentials');
   },
-
   async register(userData) {
     await delay();
     return {
       success: true,
       message: 'Registration successful',
-      user: { ...mockData.user, ...userData, id: Date.now() }
+      user: { 
+        ...mockData.user, 
+        ...userData, 
+        id: Date.now(),
+        organization: 'ovoVax Systems', // Default organization
+        role: 'operator' // Default role
+      }
     };
   },
 

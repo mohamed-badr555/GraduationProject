@@ -6,13 +6,18 @@ import { useAuth } from '../context/AuthContext';
 const ManualControl = () => {
   const { token } = useAuth();
   const [speed, setSpeed] = useState(50);
+  const [steps, setSteps] = useState(100);
   const [isMoving, setIsMoving] = useState(false);
   const [isHoming, setIsHoming] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [movementHistory, setMovementHistory] = useState([]);  // Load movement history on component mount
+  const [movementHistory, setMovementHistory] = useState([]);
+  const [movementStatus, setMovementStatus] = useState(null);
+  const [homingOperationId, setHomingOperationId] = useState(null);
+  const [statusIntervalId, setStatusIntervalId] = useState(null);  // Load movement history on component mount and get initial status
   useEffect(() => {
     loadMovementHistory();
+    checkMovementStatus(); // Load initial status only
   }, []);
 
   // Helper function to parse backend validation errors
@@ -72,6 +77,40 @@ const ManualControl = () => {
     }
   };
 
+  // Check movement status from backend
+  const checkMovementStatus = async (operationId = null) => {
+    try {
+      const statusData = operationId ? { homingOperationId: operationId } : {};
+      const response = await ApiManager.getMovementStatus(statusData);
+      if (response && response.data) {
+        setMovementStatus(response.data);
+        
+        // Check if homing is completed
+        if (isHoming && response.data.isHomed && !response.data.isMoving) {
+          setIsHoming(false);
+          setHomingOperationId(null);
+          console.log('Homing completed successfully');
+          
+          // Stop status monitoring interval
+          if (statusIntervalId) {
+            clearInterval(statusIntervalId);
+            setStatusIntervalId(null);
+          }
+          
+          await loadMovementHistory();
+        }
+        
+        // Check if movement is completed
+        if (isMoving && !response.data.isMoving) {
+          setIsMoving(false);
+          console.log('Movement completed successfully');
+          await loadMovementHistory();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check movement status:', error);
+    }
+  };
 
   const moveAxis = useCallback(async (axis, direction) => {
     if (isMoving || isHoming) return;
@@ -80,20 +119,21 @@ const ManualControl = () => {
     setError(null);
     
     try {
-      console.log(`Moving ${axis.toUpperCase()}${direction > 0 ? '+' : '-'} at ${speed}% speed`);
+      console.log(`Moving ${axis.toUpperCase()}${direction > 0 ? '+' : '-'} ${steps} steps at ${speed}% speed`);
       
       const movementData = {
         axis: axis.toUpperCase(), // Ensure axis is uppercase (Z, Y)
         direction: direction > 0 ? 1 : -1, // Use numeric values for direction enum
-        speed: speed
+        speed: speed,
+        steps: steps
       };
       
       // Call real API endpoint
       const response = await ApiManager.moveAxis(movementData);
       
       if (response && response.data && response.data.success) {
-        console.log('Movement completed successfully:', response.data.message);
-        await loadMovementHistory(); // Reload history
+        console.log('Movement started successfully:', response.data.message);
+        // Don't reload history immediately - let status monitoring handle completion
       } else {
         throw new Error(response?.data?.message || 'Failed to move axis');
       }
@@ -104,13 +144,10 @@ const ManualControl = () => {
       
       const errorMessage = parseBackendError(error);
       setError(errorMessage);
-    } finally {
       setIsMoving(false);
     }
-  }, [speed, isMoving, isHoming, loadMovementHistory]);
+  }, [speed, steps, isMoving, isHoming]);
   
-
-
   const homeAllAxes = useCallback(async () => {
     if (isMoving || isHoming) return;
     
@@ -118,17 +155,29 @@ const ManualControl = () => {
     setError(null);
     
     try {
-      console.log(`Homing all axes at ${speed}% speed...`);
+      console.log(`Starting homing at ${speed}% speed...`);
       
       // Call real API endpoint with speed parameter
       const homeData = { speed: speed };
       const response = await ApiManager.homeAxes(homeData);
       
       if (response && response.data && response.data.success) {
-        console.log('Homing completed successfully:', response.data.message);
-        await loadMovementHistory(); // Reload history
+        console.log('Homing started successfully:', response.data.message);
+        
+        // Store homing operation ID if provided
+        if (response.data.movementId) {
+          setHomingOperationId(response.data.movementId);
+        }
+        
+        // Start status monitoring interval during homing
+        const intervalId = setInterval(() => {
+          checkMovementStatus(response.data.movementId);
+        }, 2000); // Check every 2 seconds during homing
+        
+        setStatusIntervalId(intervalId);
+        
       } else {
-        throw new Error(response?.data?.message || 'Failed to home axes');
+        throw new Error(response?.data?.message || 'Failed to start homing');
       }
       
     } catch (error) {
@@ -137,10 +186,9 @@ const ManualControl = () => {
       
       const errorMessage = parseBackendError(error);
       setError(errorMessage);
-    } finally {
       setIsHoming(false);
     }
-  }, [isMoving, isHoming, loadMovementHistory]);
+  }, [speed, isMoving, isHoming]);
 
 
 
@@ -207,41 +255,86 @@ const ManualControl = () => {
 
                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-8">
             {/* Control Panel */}
-            <div className="space-y-4 lg:space-y-6">
-              {/* Speed Control */}
+            <div className="space-y-4 lg:space-y-6">              {/* Speed Control */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   <i className="fas fa-tachometer-alt text-orange-500 mr-2"></i>
-                  Movement Speed
+                  Movement Parameters
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600 dark:text-gray-300">Speed</span>
-                    <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {speed}%
-                    </span>
-                  </div>    
+                <div className="space-y-6">
+                  {/* Speed Control */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 dark:text-gray-300">Speed</span>
+                      <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {speed}%
+                      </span>
+                    </div>    
 
+                    <input
+                      type="range"
+                      min="1"
+                      max="100"
+                      value={speed}
+                      onChange={(e) => setSpeed(parseInt(e.target.value))}
+                      disabled={isMoving || isHoming}
+                      className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer 
+                        [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 
+                        [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:cursor-pointer
+                        [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:bg-blue-600
+                        [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full 
+                        [&::-moz-range-thumb]:bg-blue-500 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-none"
+                    />
+                    <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                      <span>Slow</span>
+                      <span>Fast</span>
+                    </div>
+                  </div>
+
+                  {/* Steps Control */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 dark:text-gray-300">Steps</span>
+                      <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {steps}
+                      </span>
+                    </div>
+
+                    <input
+                      type="range"
+                      min="1"
+                      max="10000"
+                      value={steps}
+                      onChange={(e) => setSteps(parseInt(e.target.value))}
+                      disabled={isMoving || isHoming}
+                      className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer 
+                        [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 
+                        [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-500 [&::-webkit-slider-thumb]:cursor-pointer
+                        [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:bg-green-600
+                        [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full 
+                        [&::-moz-range-thumb]:bg-green-500 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-none"
+                    />
+                    <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                      <span>1 step</span>
+                      <span>10000 steps</span>
+                    </div>
+
+                    {/* Direct input for precise steps */}
+                    <div className="flex items-center space-x-2">
                       <input
-                    type="range"
-                    min="1"
-                    max="100"
-                    value={speed}
-                    onChange={(e) => setSpeed(parseInt(e.target.value))}
-                    disabled={isMoving || isHoming}
-                    className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer 
-                      [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 
-                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:cursor-pointer
-                      [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:bg-blue-600
-                      [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full 
-                      [&::-moz-range-thumb]:bg-blue-500 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-none"
-                  />
-                  <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                    <span>Slow</span>
-                    <span>Fast</span>
+                        type="number"
+                        min="1"
+                        max="10000"
+                        value={steps}
+                        onChange={(e) => setSteps(Math.max(1, Math.min(10000, parseInt(e.target.value) || 1)))}
+                        disabled={isMoving || isHoming}
+                        className="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-500 dark:text-gray-400">steps</span>
+                    </div>
                   </div>
                 </div>
-              </div>       
+              </div>
                      {/* Home Button */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
@@ -320,17 +413,50 @@ const ManualControl = () => {
                     icon="fa-arrow-right"
                   />
                 </div>
-              </div>
+              </div>              {/* Enhanced Status Display */}
+              {(isMoving || isHoming || movementStatus) && (
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                    <i className="fas fa-robot text-blue-500 mr-2"></i>
+                    System Activity
+                  </h4>
+                  
+                  {(isMoving || isHoming) && (
+                    <div className="flex items-center mb-3">
+                      <i className="fas fa-spinner fa-spin text-yellow-500 mr-3"></i>
+                      <span className="text-yellow-800 dark:text-yellow-200 font-medium">
+                        {isHoming ? 'Homing in progress...' : 'Movement in progress...'}
+                      </span>
+                    </div>
+                  )}
 
-              {/* Status */}
-              {(isMoving || isHoming) && (
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
-                  <div className="flex items-center">
-                    <i className="fas fa-spinner fa-spin text-yellow-500 mr-3"></i>
-                    <span className="text-yellow-800 dark:text-yellow-200 font-medium">
-                      {isHoming ? 'Homing in progress...' : 'Movement in progress...'}
-                    </span>
-                  </div>
+                  {movementStatus && (                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Connection:</span>
+                        <span className={`font-medium ${movementStatus.isConnected ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {movementStatus.isConnected ? '🟢 Online' : '🔴 Offline'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Homed:</span>
+                        <span className={`font-medium ${movementStatus.isHomed ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                          {movementStatus.isHomed ? '✅ Yes' : '⚠️ No'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Z Position:</span>
+                        <span className="font-medium text-blue-600 dark:text-blue-400">
+                          {movementStatus.zPosition || 0} steps
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Y Position:</span>
+                        <span className="font-medium text-green-600 dark:text-green-400">
+                          {movementStatus.yPosition || 0} steps
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -412,6 +538,64 @@ const ManualControl = () => {
                   )}
                 </tbody></table>
             </div>
+          </div>
+
+          {/* System Status */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              <i className="fas fa-info-circle text-blue-500 mr-2"></i>
+              System Status
+            </h3>
+            {movementStatus ? (
+              <div className="space-y-3">                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Connection:</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    movementStatus.isConnected 
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                      : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                  }`}>
+                    {movementStatus.isConnected ? 'Connected' : 'Disconnected'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Homed:</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    movementStatus.isHomed 
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                      : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
+                  }`}>
+                    {movementStatus.isHomed ? 'Yes' : 'No'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Z Position:</span>
+                  <span className="text-gray-900 dark:text-white font-medium">
+                    {movementStatus.zPosition} steps
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Y Position:</span>
+                  <span className="text-gray-900 dark:text-white font-medium">
+                    {movementStatus.yPosition} steps
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    movementStatus.status === 'Ready'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
+                  }`}>
+                    {movementStatus.status}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 dark:text-gray-400">
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Loading status...
+              </div>
+            )}
           </div>
 
         </div>

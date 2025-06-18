@@ -74,8 +74,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Login error:', error);
       return { success: false, error: error.message || 'Network error. Please try again.' };
     }
-  };
-  const register = async (userData) => {
+  };  const register = async (userData) => {
     try {
       const response = await authService.register(userData);
 

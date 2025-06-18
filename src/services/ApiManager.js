@@ -122,10 +122,11 @@ export default class ApiManager {
     return axiosResult;
   }
 
-  // ==================== MANUAL CONTROL APIS ====================
+  // ==================== MOVEMENT APIS ====================
+
   /**
    * Move Axis
-   * @param {Object} movementData - { axis, direction, speed } - step removed, hardware handles it internally
+   * @param {Object} movementData - { axis, direction, speed, steps }
    * @returns {Object} movement response
    */
   static async moveAxis(movementData) {
@@ -137,15 +138,34 @@ export default class ApiManager {
       }
     );
     return axiosResult;
-  }  /**
+  }
+
+  /**
    * Home All Axes
-   * @param {Object} homeData - { speed } - speed parameter added (1-100, default 50)
+   * @param {Object} homeData - { speed }
    * @returns {Object} movement response
    */
   static async homeAxes(homeData = {}) {
     const axiosResult = await axios.post(
       baseUrl + "/Movement/home",
       homeData,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return axiosResult;
+  }
+
+  /**
+   * Get Movement Status
+   * @param {Object} statusData - { homingOperationId?: number } - Optional homing operation ID to track
+   * @returns {Object} movement status
+   * Response: { isConnected: boolean, zPosition: number, yPosition: number, isHomed: boolean, isMoving: boolean, status: string, limitSwitch1: boolean, limitSwitch2: boolean, limitSwitch3: boolean, timestamp: number }
+   */
+  static async getMovementStatus(statusData = {}) {
+    const axiosResult = await axios.post(
+      baseUrl + "/Movement/status",
+      statusData,
       {
         headers: getHeaders(),
       }
@@ -162,16 +182,18 @@ export default class ApiManager {
       headers: getHeaders(),
     });
     return axiosResult;
-  }
+  }  // ==================== ESP32 APIS ====================
 
   /**
-   * Get Movement Status
-   * @returns {Object} movement status
+   * Get ESP32 Connection Status
+   * @returns {Object} ESP32 connection status
+   * Response: { connected: boolean, timestamp: string, message?: string, error?: string }
    */
-  static async getMovementStatus() {
-    const axiosResult = await axios.get(baseUrl + "/Movement/status", {
+  static async getEsp32Status() {
+    const axiosResult = await axios.get(baseUrl + "/Esp32/status", {
       headers: getHeaders(),
     });
     return axiosResult;
   }
+
 }

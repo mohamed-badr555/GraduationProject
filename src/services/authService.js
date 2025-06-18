@@ -79,16 +79,15 @@ export const authService = {
         error: 'Please fill in all required fields'
       };
     }
-    
-    // Create new user
+      // Create new user
     const newUser = {
       id: MOCK_USERS.length + 1,
       firstName: userData.firstName,
       lastName: userData.lastName,
       email: userData.email,
       password: userData.password, // In real app, this would be hashed
-      organization: userData.organization || 'ovoVax Systems',
-      role: userData.role || 'operator'
+      organization: 'ovoVax Systems', // Default organization
+      role: 'operator' // Default role
     };
     
     // Add to mock database
