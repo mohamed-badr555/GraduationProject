@@ -155,24 +155,6 @@ export default class ApiManager {
     );
     return axiosResult;
   }
-
-  /**
-   * Get Movement Status
-   * @param {Object} statusData - { homingOperationId?: number } - Optional homing operation ID to track
-   * @returns {Object} movement status
-   * Response: { isConnected: boolean, zPosition: number, yPosition: number, isHomed: boolean, isMoving: boolean, status: string, limitSwitch1: boolean, limitSwitch2: boolean, limitSwitch3: boolean, timestamp: number }
-   */
-  static async getMovementStatus(statusData = {}) {
-    const axiosResult = await axios.post(
-      baseUrl + "/Movement/status",
-      statusData,
-      {
-        headers: getHeaders(),
-      }
-    );
-    return axiosResult;
-  }
-
   /**
    * Get Movement History
    * @returns {Object} movement history data
@@ -182,7 +164,7 @@ export default class ApiManager {
       headers: getHeaders(),
     });
     return axiosResult;
-  }  // ==================== ESP32 APIS ====================
+  }// ==================== ESP32 APIS ====================
 
   /**
    * Get ESP32 Connection Status
