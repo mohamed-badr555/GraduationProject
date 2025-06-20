@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../Component/Layout/DashboardLayout';
 import ApiManager from '../services/ApiManager';
+import { useAuth } from '../context/AuthContext';
 
 export default function Scanner() {
-  const [isScanning, setIsScanning] = useState(false);  const [scanData, setScanData] = useState({});
+  const { token } = useAuth();
+  const [isScanning, setIsScanning] = useState(false);const [scanData, setScanData] = useState({});
   const [scanHistory, setScanHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -11,12 +13,11 @@ export default function Scanner() {
   // Load scan history on component mount
   useEffect(() => {
     loadScanHistory();
-  }, []);
-  // Load scan history from API
+  }, []);  // Load scan history from API
   const loadScanHistory = async () => {
     try {
       setLoading(true);
-      const response = await ApiManager.getScanHistory();
+      const response = await ApiManager.getScanHistory(token);
       setScanHistory(response.data || []);
     } catch (error) {
       console.error('Failed to load scan history:', error);
@@ -24,8 +25,7 @@ export default function Scanner() {
     } finally {
       setLoading(false);
     }
-  };
-  // Start scan handler - calls actual API endpoint
+  };  // Start scan handler - calls actual API endpoint
   const handleStartScan = async () => {
     try {
       setIsScanning(true);
@@ -34,7 +34,7 @@ export default function Scanner() {
       console.log('Starting infrared scan');
       
       // Call real API endpoint
-      const response = await ApiManager.startScan();
+      const response = await ApiManager.startScan(token);
       if (response && response.data && response.data.success) {
         setScanData({
           scanId: response.data.scanId,
@@ -62,7 +62,7 @@ export default function Scanner() {
       const stopData = { scanId: scanData.scanId };
       console.log('Stop scan data:', stopData);
       
-      const response = await ApiManager.stopScan(stopData);
+      const response = await ApiManager.stopScan(stopData, token);
       
       if (response && response.data && response.data.success) {
         // Update with final data from backend

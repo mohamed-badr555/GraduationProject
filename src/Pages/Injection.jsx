@@ -30,10 +30,9 @@ const Injection = () => {
     if (isInjecting && currentOperationId) {      // Poll every 3 seconds to check if injection is completed
       statusInterval = setInterval(async () => {
         try {
-          console.log('Checking injection status for operation:', currentOperationId);
-          const response = await ApiManager.checkInjectionStatus({
+          console.log('Checking injection status for operation:', currentOperationId);          const response = await ApiManager.checkInjectionStatus({
             operationId: currentOperationId
-          });
+          }, token);
           
           console.log('Status response:', response.data);
           
@@ -46,7 +45,7 @@ const Injection = () => {
               
               // Call complete injection endpoint
               try {
-                await ApiManager.completeInjection({ operationId: currentOperationId });
+                await ApiManager.completeInjection({ operationId: currentOperationId }, token);
                 console.log('Injection marked as complete');
               } catch (completeError) {
                 console.error('Failed to complete injection:', completeError);
@@ -66,7 +65,7 @@ const Injection = () => {
             
             // Try to call complete injection endpoint anyway
             try {
-              await ApiManager.completeInjection({ operationId: currentOperationId });
+              await ApiManager.completeInjection({ operationId: currentOperationId }, token);
               console.log('Injection marked as complete');
             } catch (completeError) {
               console.error('Failed to complete injection:', completeError);
@@ -124,12 +123,11 @@ const Injection = () => {
     
     // Fallback to generic error message
     return error.message || 'An unexpected error occurred';  };
-
   // Load injection history from API
   const loadInjectionHistory = async () => {
     try {
       setLoading(true);
-      const response = await ApiManager.getInjectionHistory();
+      const response = await ApiManager.getInjectionHistory(token);
       setInjectionHistory(response.data || []);
     } catch (error) {
       console.error('Failed to load injection history:', error);
@@ -162,9 +160,8 @@ const Injection = () => {
       };
       
       console.log('Starting injection operation with parameters:', injectionData);
-      
-      // Call real API endpoint
-      const response = await ApiManager.startInjection(injectionData);
+        // Call real API endpoint
+      const response = await ApiManager.startInjection(injectionData, token);
         if (response && response.data && response.data.success) {
         setCurrentOperationId(response.data.operationId);
         console.log('Injection operation started successfully:', response.data.message);
@@ -194,11 +191,10 @@ const Injection = () => {
       setError(null);
       
       console.log('Stopping injection operation:', currentOperationId);
-      
-      // Call real API endpoint
+        // Call real API endpoint
       const response = await ApiManager.stopInjection({
         operationId: currentOperationId
-      });
+      }, token);
       
       if (response && response.data && response.data.success) {
         console.log('Injection operation stopped successfully:', response.data.message);

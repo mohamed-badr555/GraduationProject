@@ -325,180 +325,180 @@ export default class ApiManager {
       };
     }
   }
-
   // ==================== SCANNER APIS ====================
 
   /**
    * Start Scanner
+   * @param {string} token - JWT authentication token
    * @returns {Object} scan response with scanId
    * Response: { success: boolean, message: string, scanId: number, status: string|null, readings: number[]|null, readingCount: number }
    */
-  static async startScan() {
+  static async startScan(token) {
     const axiosResult = await axios.get(
       baseUrl + "/Scanner/start",
       {
-        headers: getHeaders(),
+        headers: getHeaders(token),
       }
     );
     return axiosResult;
   }
-
   /**
    * Stop Scanner
    * @param {Object} stopData - { scanId: number }
+   * @param {string} token - JWT authentication token
    * @returns {Object} scan response with readings array
    * Response: { success: boolean, message: string, scanId: number, status: string, readings: number[], readingCount: number }
    */
-  static async stopScan(stopData) {
+  static async stopScan(stopData, token) {
     const axiosResult = await axios.post(
       baseUrl + "/Scanner/stop",
       stopData,
       {
-        headers: getHeaders(),
+        headers: getHeaders(token),
       }
     );
     return axiosResult;
   }
-
   /**
    * Get Scanner History
+   * @param {string} token - JWT authentication token
    * @returns {Object} scan history data
    * Response: Array of { id: number, scanTime: string, sensorReadings: number[], readingCount: number, status: string, errorMessage: string|null }
    */
-  static async getScanHistory() {
+  static async getScanHistory(token) {
     const axiosResult = await axios.get(baseUrl + "/Scanner/history", {
-      headers: getHeaders(),
+      headers: getHeaders(token),
     });
     return axiosResult;
   }
 
   // ==================== INJECTION APIS ====================
-
   /**
    * Start Injection Operation
    * @param {Object} injectionData - { rangeOfInfraredFrom, rangeOfInfraredTo, stepOfInjection, volumeOfLiquid, numberOfElements }
+   * @param {string} token - JWT authentication token
    * @returns {Object} injection response with operationId
    */
-  static async startInjection(injectionData) {
+  static async startInjection(injectionData, token) {
     const axiosResult = await axios.post(
       baseUrl + "/Injection/start",
       injectionData,
       {
-        headers: getHeaders(),
+        headers: getHeaders(token),
       }
     );
     return axiosResult;
-  }
-  /**
+  }  /**
    * Stop Injection Operation
    * @param {Object} stopData - { operationId }
+   * @param {string} token - JWT authentication token
    * @returns {Object} injection response
    */
-  static async stopInjection(stopData) {
+  static async stopInjection(stopData, token) {
     const axiosResult = await axios.post(
       baseUrl + "/Injection/stop",
       stopData,
       {
-        headers: getHeaders(),
+        headers: getHeaders(token),
       }
     );
     return axiosResult;
-  }
-  /**
+  }  /**
    * Check if Injection Operation is Completed
    * @param {Object} statusData - { operationId }
+   * @param {string} token - JWT authentication token
    * @returns {boolean} true if completed, false if still in progress
    */
-  static async checkInjectionStatus(statusData) {
+  static async checkInjectionStatus(statusData, token) {
     const axiosResult = await axios.post(
       baseUrl + "/Injection/status",
       statusData,
       {
-        headers: getHeaders(),
+        headers: getHeaders(token),
       }
     );
     return axiosResult;
   }
-
   /**
    * Complete Injection Operation
    * @param {Object} completeData - { operationId }
+   * @param {string} token - JWT authentication token
    * @returns {Object} injection response
    */
-  static async completeInjection(completeData) {
+  static async completeInjection(completeData, token) {
     const axiosResult = await axios.post(
       baseUrl + "/Injection/complete",
       completeData,
       {
-        headers: getHeaders(),
+        headers: getHeaders(token),
       }
     );
     return axiosResult;
   }
-
   /**
    * Get Injection History
+   * @param {string} token - JWT authentication token
    * @returns {Object} injection operations history
    */
-  static async getInjectionHistory() {
+  static async getInjectionHistory(token) {
     const axiosResult = await axios.get(baseUrl + "/Injection/history", {
-      headers: getHeaders(),
+      headers: getHeaders(token),
     });
     return axiosResult;
   }
 
   // ==================== MOVEMENT APIS ====================
-
   /**
    * Move Axis
    * @param {Object} movementData - { axis, direction, speed, steps }
+   * @param {string} token - JWT authentication token
    * @returns {Object} movement response
    */
-  static async moveAxis(movementData) {
+  static async moveAxis(movementData, token) {
     const axiosResult = await axios.post(
       baseUrl + "/Movement/move",
       movementData,
       {
-        headers: getHeaders(),
+        headers: getHeaders(token),
       }
     );
     return axiosResult;
   }
-
   /**
    * Home All Axes
    * @param {Object} homeData - { speed }
+   * @param {string} token - JWT authentication token
    * @returns {Object} movement response
    */
-  static async homeAxes(homeData = {}) {
+  static async homeAxes(homeData = {}, token) {
     const axiosResult = await axios.post(
       baseUrl + "/Movement/home",
       homeData,
       {
-        headers: getHeaders(),
+        headers: getHeaders(token),
       }
     );
     return axiosResult;
-  }
-  /**
+  }  /**
    * Get Movement History
+   * @param {string} token - JWT authentication token
    * @returns {Object} movement history data
    */
-  static async getMovementHistory() {
+  static async getMovementHistory(token) {
     const axiosResult = await axios.get(baseUrl + "/Movement/history", {
-      headers: getHeaders(),
+      headers: getHeaders(token),
     });
     return axiosResult;
   }// ==================== ESP32 APIS ====================
-
   /**
    * Get ESP32 Connection Status
+   * @param {string} token - JWT authentication token
    * @returns {Object} ESP32 connection status
    * Response: { connected: boolean, timestamp: string, message?: string, error?: string }
    */
-  static async getEsp32Status() {
+  static async getEsp32Status(token) {
     const axiosResult = await axios.get(baseUrl + "/Esp32/status", {
-      headers: getHeaders(),
+      headers: getHeaders(token),
     });
     return axiosResult;
   }

@@ -55,12 +55,11 @@ const ManualControl = () => {
     return error.message || 'An unexpected error occurred';
   };
 
-
   // Load movement history from API
   const loadMovementHistory = async () => {
     try {
       setLoading(true);
-      const response = await ApiManager.getMovementHistory();
+      const response = await ApiManager.getMovementHistory(token);
       setMovementHistory(response.data || []);
     } catch (error) {
       console.error('Failed to load movement history:', error);
@@ -86,9 +85,8 @@ const ManualControl = () => {
         direction: direction > 0 ? 1 : -1, // Use numeric values for direction enum
         speed: speed,
         steps: steps
-      };
-        // Call real API endpoint
-      const response = await ApiManager.moveAxis(movementData);
+      };        // Call real API endpoint
+      const response = await ApiManager.moveAxis(movementData, token);
       
       if (response && response.data && response.data.success) {
         console.log('Movement completed successfully:', response.data.message);
@@ -114,10 +112,9 @@ const ManualControl = () => {
     
     try {
       console.log(`Starting homing at ${speed}% speed...`);
-      
-      // Call real API endpoint with speed parameter
+        // Call real API endpoint with speed parameter
       const homeData = { speed: speed };
-      const response = await ApiManager.homeAxes(homeData);
+      const response = await ApiManager.homeAxes(homeData, token);
         if (response && response.data && response.data.success) {
         console.log('Homing completed successfully:', response.data.message);
         await loadMovementHistory(); // Reload history immediately

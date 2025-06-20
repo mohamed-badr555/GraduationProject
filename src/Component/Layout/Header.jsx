@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import ApiManager from '../../services/ApiManager';
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const { theme } = useTheme();
   const { toggleSidebar, isMobile } = useSidebar();
   const navigate = useNavigate();  const [esp32Status, setEsp32Status] = useState(null);
@@ -22,11 +22,10 @@ export default function Header() {
     }, 10000);
 
     return () => clearInterval(statusInterval);
-  }, []);
-  // Function to check ESP32 status
+  }, []);  // Function to check ESP32 status
   const checkEsp32Status = async () => {
     try {
-      const response = await ApiManager.getEsp32Status();
+      const response = await ApiManager.getEsp32Status(token);
       if (response && response.data) {
         setEsp32Status(response.data);
       }
