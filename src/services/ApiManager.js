@@ -1,21 +1,331 @@
 import axios from "axios";
 
 // API Manager for ovoVax - Automated In-Ovo Vaccination System
-// Only includes endpoints that actually exist in the backend
-// No authentication endpoints until backend implements them
+// Complete API integration with backend authentication endpoints
 
 // const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://ovovax.runasp.net/api";
 const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://localhost:7268/api";
 
-// Helper function to get headers (no token for now)
-const getHeaders = () => {
-  return {
+// Helper function to get headers with optional token
+const getHeaders = (token = null) => {
+  const headers = {
     "Content-Type": "application/json",
   };
+  
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
+  return headers;
 };
 
-
 export default class ApiManager {
+  // ==================== AUTHENTICATION APIS ====================
+  /**
+   * Register new user
+   * @param {Object} userData - { firstName, lastName, email, password, confirmPassword }
+   * @returns {Object} registration response
+   * Response: { success: boolean, user?: object, token?: string, message?: string, errors?: object }
+   */
+  static async register(userData) {
+    try {
+      const response = await axios.post(
+        baseUrl + "/Auth/register",
+        userData,
+        {
+          headers: getHeaders(),
+        }
+      );
+      
+      // Return the response data directly from backend
+      return response.data;
+    } catch (error) {
+      console.error("Registration API error:", error);
+      
+      // Handle API error responses
+      if (error.response?.data) {
+        return {
+          success: false,
+          error: error.response.data.message || 'Registration failed',
+          errors: error.response.data.errors || null,
+          status: error.response.status
+        };
+      }
+      
+      // Handle network/connection errors
+      return {
+        success: false,
+        error: 'Network error. Please check your connection and try again.',
+        status: error.code || 'NETWORK_ERROR'
+      };
+    }
+  }
+  /**
+   * Login user
+   * @param {Object} loginData - { email, password }
+   * @returns {Object} login response
+   * Response: { success: boolean, user?: object, token?: string, message?: string }
+   */
+  static async login(loginData) {
+    try {
+      const response = await axios.post(
+        baseUrl + "/Auth/login",
+        loginData,
+        {
+          headers: getHeaders(),
+        }
+      );
+      
+      // Return the response data directly from backend
+      return response.data;
+    } catch (error) {
+      console.error("Login API error:", error);
+      
+      // Handle API error responses
+      if (error.response?.data) {
+        return {
+          success: false,
+          error: error.response.data.message || 'Login failed',
+          status: error.response.status
+        };
+      }
+      
+      // Handle network/connection errors
+      return {
+        success: false,
+        error: 'Network error. Please check your connection and try again.',
+        status: error.code || 'NETWORK_ERROR'
+      };
+    }
+  }
+  /**
+   * Initiate password reset
+   * @param {Object} resetData - { email }
+   * @returns {Object} password reset response
+   * Response: { success: boolean, message?: string }
+   */
+  static async forgotPassword(resetData) {
+    try {
+      const response = await axios.post(
+        baseUrl + "/Auth/forgot-password",
+        resetData,
+        {
+          headers: getHeaders(),
+        }
+      );
+      
+      // Return the response data directly from backend
+      return response.data;
+    } catch (error) {
+      console.error("Forgot password API error:", error);
+      
+      // Handle API error responses
+      if (error.response?.data) {
+        return {
+          success: false,
+          error: error.response.data.message || 'Password reset failed',
+          status: error.response.status
+        };
+      }
+      
+      // Handle network/connection errors
+      return {
+        success: false,
+        error: 'Network error. Please check your connection and try again.',
+        status: error.code || 'NETWORK_ERROR'
+      };
+    }
+  }
+  /**
+   * Validate JWT token
+   * @param {string} token - JWT token to validate
+   * @returns {Object} token validation response
+   * Response: { success: boolean, user?: object, message?: string }
+   */
+  static async validateToken(token) {
+    try {
+      const response = await axios.get(
+        baseUrl + "/Auth/validate-token",
+        {
+          headers: getHeaders(token),
+        }
+      );
+      
+      // Return the response data directly from backend
+      return response.data;
+    } catch (error) {
+      console.error("Token validation API error:", error);
+      
+      // Handle API error responses
+      if (error.response?.data) {
+        return {
+          success: false,
+          error: error.response.data.message || 'Token validation failed',
+          status: error.response.status
+        };
+      }
+      
+      // Handle network/connection errors
+      return {
+        success: false,
+        error: 'Token validation failed - network error',
+        status: error.code || 'NETWORK_ERROR'
+      };
+    }
+  }
+  /**
+   * Check if email exists in system
+   * @param {Object} emailData - { email }
+   * @returns {Object} email check response
+   * Response: { exists: boolean, message?: string }
+   */
+  static async checkEmailExists(emailData) {
+    try {
+      const response = await axios.post(
+        baseUrl + "/Auth/check-email",
+        emailData,
+        {
+          headers: getHeaders(),
+        }
+      );
+      
+      // Return the response data directly from backend
+      return response.data;
+    } catch (error) {
+      console.error("Check email exists API error:", error);
+      
+      // Handle API error responses
+      if (error.response?.data) {
+        return {
+          exists: false,
+          error: error.response.data.message || 'Email check failed',
+          status: error.response.status
+        };
+      }
+      
+      // Handle network/connection errors
+      return {
+        exists: false,
+        error: 'Network error. Please check your connection and try again.',
+        status: error.code || 'NETWORK_ERROR'
+      };
+    }
+  }
+  /**
+   * Validate password strength
+   * @param {Object} passwordData - { password }
+   * @returns {Object} password validation response
+   * Response: { isValid: boolean, message?: string, errors?: string[] }
+   */
+  static async validatePassword(passwordData) {
+    try {
+      const response = await axios.post(
+        baseUrl + "/Auth/validate-password",
+        passwordData,
+        {
+          headers: getHeaders(),
+        }
+      );
+      
+      // Return the response data directly from backend
+      return response.data;
+    } catch (error) {
+      console.error("Password validation API error:", error);
+      
+      // Handle API error responses
+      if (error.response?.data) {
+        return {
+          isValid: false,
+          error: error.response.data.message || 'Password validation failed',
+          errors: error.response.data.errors || null,
+          status: error.response.status
+        };
+      }
+      
+      // Handle network/connection errors
+      return {
+        isValid: false,
+        error: 'Network error. Please check your connection and try again.',
+        status: error.code || 'NETWORK_ERROR'
+      };
+    }
+  }
+  /**
+   * Get current user profile
+   * @param {string} token - JWT token
+   * @returns {Object} user profile response
+   * Response: { success: boolean, user?: object, message?: string }
+   */
+  static async getCurrentUser(token) {
+    try {
+      const response = await axios.get(
+        baseUrl + "/Auth/me",
+        {
+          headers: getHeaders(token),
+        }
+      );
+      
+      // Return the response data directly from backend
+      return response.data;
+    } catch (error) {
+      console.error("Get current user API error:", error);
+      
+      // Handle API error responses
+      if (error.response?.data) {
+        return {
+          success: false,
+          error: error.response.data.message || 'Failed to get user profile',
+          status: error.response.status
+        };
+      }
+      
+      // Handle network/connection errors
+      return {
+        success: false,
+        error: 'Network error. Please check your connection and try again.',
+        status: error.code || 'NETWORK_ERROR'
+      };
+    }
+  }
+  /**
+   * Logout user (invalidate token on server)
+   * @param {string} token - JWT token
+   * @returns {Object} logout response
+   * Response: { success: boolean, message?: string }
+   */
+  static async logout(token) {
+    try {
+      const response = await axios.post(
+        baseUrl + "/Auth/logout",
+        {},
+        {
+          headers: getHeaders(token),
+        }
+      );
+      
+      // Return the response data directly from backend
+      return response.data;
+    } catch (error) {
+      console.error("Logout API error:", error);
+      
+      // Handle API error responses - even if logout fails on server, allow local cleanup
+      if (error.response?.data) {
+        return {
+          success: false,
+          error: error.response.data.message || 'Logout failed on server',
+          status: error.response.status
+        };
+      }
+      
+      // Handle network/connection errors
+      return {
+        success: false,
+        error: 'Network error during logout',
+        status: error.code || 'NETWORK_ERROR'
+      };
+    }
+  }
+
   // ==================== SCANNER APIS ====================
 
   /**

@@ -22,9 +22,9 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('authToken');
       const userData = localStorage.getItem('userData');
-      
-      if (storedToken && userData) {        try {
-          // Validate the token with the mock auth service
+        if (storedToken && userData) {
+        try {
+          // Validate the token with the real auth service
           const response = await authService.validateToken(storedToken);
           
           if (response && response.success && response.user) {
@@ -95,14 +95,16 @@ export const AuthProvider = ({ children }) => {
       console.error('Registration error:', error);
       return { success: false, error: error.message || 'Network error. Please try again.' };
     }
-  };
-  const logout = async () => {
+  };  const logout = async () => {
     try {
-      // For mock service, we don't need to call the server
-      // Just clear the local data
-      console.log('Logging out user');
+      // Call the real logout service to invalidate token on server
+      if (token) {
+        await authService.logout(token);
+      }
+      console.log('User logged out successfully');
     } catch (error) {
       console.error('Logout error:', error);
+      // Continue with local cleanup even if server logout fails
     } finally {
       clearAuthData();
     }
