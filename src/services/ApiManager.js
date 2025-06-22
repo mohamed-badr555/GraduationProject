@@ -371,11 +371,11 @@ export default class ApiManager {
     });
     return axiosResult;
   }
-
   // ==================== INJECTION APIS ====================
+
   /**
    * Start Injection Operation
-   * @param {Object} injectionData - { rangeOfInfraredFrom, rangeOfInfraredTo, stepOfInjection, volumeOfLiquid, numberOfElements }
+   * @param {Object} injectionData - { stepOfInjection, volumeOfLiquid, numberOfElements }
    * @param {string} token - JWT authentication token
    * @returns {Object} injection response with operationId
    */

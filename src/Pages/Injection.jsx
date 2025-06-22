@@ -11,13 +11,10 @@ const Injection = () => {
   const [injectionHistory, setInjectionHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
-  // Injection parameters
-  const [rangeOfInfraredFrom, setRangeOfInfraredFrom] = useState('');
-  const [rangeOfInfraredTo, setRangeOfInfraredTo] = useState('');
+    // Injection parameters
   const [stepOfInjection, setStepOfInjection] = useState('');
   const [volumeOfLiquid, setVolumeOfLiquid] = useState(''); 
-   const [numberOfElements, setNumberOfElements] = useState('');
+  const [numberOfElements, setNumberOfElements] = useState('');
   // Load injection history on component mount
   useEffect(() => {
     loadInjectionHistory();
@@ -138,11 +135,10 @@ const Injection = () => {
     } finally {
       setLoading(false);
     }
-  };
-   // Handle start injection - API call will be made here
+  };   // Handle start injection - API call will be made here
   const handleStartInjection = async () => {
     // Validate all required parameters
-    if (!rangeOfInfraredFrom || !rangeOfInfraredTo || !stepOfInjection || !volumeOfLiquid || !numberOfElements) {
+    if (!stepOfInjection || !volumeOfLiquid || !numberOfElements) {
       setError('Please fill in all injection parameters');
       return;
     }
@@ -152,8 +148,6 @@ const Injection = () => {
       setError(null);
       
       const injectionData = {
-        rangeOfInfraredFrom: parseFloat(rangeOfInfraredFrom),
-        rangeOfInfraredTo: parseFloat(rangeOfInfraredTo),
         stepOfInjection: parseFloat(stepOfInjection),
         volumeOfLiquid: parseFloat(volumeOfLiquid),
         numberOfElements: parseInt(numberOfElements)
@@ -253,37 +247,8 @@ const Injection = () => {
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
             <i className="fa-solid fa-cog mr-2 text-green-600"></i>
             Injection Parameters
-          </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {/* Range Of Infrared From */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Range From (mm)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={rangeOfInfraredFrom}
-                onChange={(e) => setRangeOfInfraredFrom(e.target.value)}
-                className="w-full sm:w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="25.0"
-              />
-            </div>
-
-            {/* Range Of Infrared To */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Range To (mm)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={rangeOfInfraredTo}
-                onChange={(e) => setRangeOfInfraredTo(e.target.value)}
-                className="w-full sm:w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="30.0"
-              />
-            </div>{/* Step Of Injection */}
+          </h2>            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            {/* Step Of Injection */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Step Of Injection (mm)
@@ -339,8 +304,6 @@ const Injection = () => {
               onClick={handleStartInjection}
               disabled={
                 isInjecting || 
-                !rangeOfInfraredFrom || 
-                !rangeOfInfraredTo || 
                 !stepOfInjection || 
                 !volumeOfLiquid || 
                 !numberOfElements

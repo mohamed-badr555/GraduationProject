@@ -50,7 +50,7 @@ GET /api/Scanner/status
 ```javascript
 // Start injection
 POST /api/Injection/start
-// Body: { rangeOfInfraredFrom, rangeOfInfraredTo, stepOfInjection, volumeOfLiquid, numberOfElements }
+// Body: { stepOfInjection, volumeOfLiquid, numberOfElements }
 
 // Stop injection
 POST /api/Injection/stop
